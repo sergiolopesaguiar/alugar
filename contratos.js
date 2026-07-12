@@ -25,6 +25,39 @@ let editandoId = null;
 let todosVeiculos = []; // {id, placa, modelo} - carregado uma vez
 let veiculosDoContrato = []; // ids dos veículos já adicionados ao contrato em edição/criação
 
+// Um veículo não pode estar em dois contratos ativos ao mesmo tempo. Contrato
+// ativo = data_final vazia OU data_final ainda não vencida (>= hoje). Este
+// Set guarda os ids de veículos já presos a um contrato ativo QUALQUER,
+// exceto o próprio contrato em edição (senão o veículo sumiria do combo ao
+// tentar editar o contrato que já o contém). Recalculado sempre que
+// editandoId muda (editar/cancelarEdicao) e no carregamento inicial.
+let veiculosBloqueados = new Set();
+
+async function carregarVeiculosBloqueados(excluirContratoId){
+
+    const {data, error} = await supabaseClient
+        .from('contratos_veiculos')
+        .select('veiculo_id, contrato_id, contratos(data_final)');
+
+    if(error){
+        veiculosBloqueados = new Set();
+        return;
+    }
+
+    const hoje = new Date().toISOString().slice(0,10);
+
+    veiculosBloqueados = new Set(
+        (data || [])
+            .filter(cv => cv.contrato_id !== excluirContratoId)
+            .filter(cv => {
+                const dataFinal = cv.contratos?.data_final;
+                return !dataFinal || dataFinal >= hoje;
+            })
+            .map(cv => cv.veiculo_id)
+    );
+
+}
+
 async function carregarClientesDisponiveis(){
 
     const {data, error} = await supabaseClient
@@ -64,6 +97,8 @@ async function carregarVeiculosDisponiveis(){
 
     todosVeiculos = data || [];
 
+    await carregarVeiculosBloqueados(editandoId);
+
     atualizarComboVeiculos();
     renderizarVeiculosDoContrato();
 
@@ -77,7 +112,7 @@ function atualizarComboVeiculos(){
 
     const combo = document.getElementById('comboVeiculos');
 
-    const disponiveis = todosVeiculos.filter(v => !veiculosDoContrato.includes(v.id));
+    const disponiveis = todosVeiculos.filter(v => !veiculosDoContrato.includes(v.id) && !veiculosBloqueados.has(v.id));
 
     if(disponiveis.length === 0){
         combo.innerHTML = '<option value="" selected disabled>Nenhum veículo disponível</option>';
@@ -225,6 +260,8 @@ async function editar(id){
 
     veiculosDoContrato = (data.contratos_veiculos || []).map(cv => cv.veiculo_id);
 
+    await carregarVeiculosBloqueados(editandoId);
+
     atualizarComboVeiculos();
     renderizarVeiculosDoContrato();
 
@@ -244,6 +281,8 @@ async function cancelarEdicao(){
     document.getElementById("observacao").value = '';
 
     veiculosDoContrato = [];
+
+    await carregarVeiculosBloqueados(null);
 
     atualizarComboVeiculos();
     renderizarVeiculosDoContrato();
@@ -299,6 +338,44 @@ async function salvar(){
         return;
     }
 
+    // Revalida no banco, na hora de salvar, que nenhum veículo selecionado está
+    // em outro contrato ativo (data_final vazia ou não vencida). O combo já
+    // esconde esses veículos, mas esta checagem cobre o caso de duas abas
+    // editando ao mesmo tempo.
+    const idsSelecionados = veiculosSelecionados();
+
+    if(idsSelecionados.length > 0){
+
+        const {data: vinculos, error: erroValidacao} = await supabaseClient
+            .from('contratos_veiculos')
+            .select('veiculo_id, contrato_id, contratos(data_final)')
+            .in('veiculo_id', idsSelecionados);
+
+        if(erroValidacao){
+            alert('Erro ao validar veículos: ' + erroValidacao.message);
+            return;
+        }
+
+        const hoje = new Date().toISOString().slice(0,10);
+
+        const conflitos = (vinculos || []).filter(v => {
+            if(editandoId && v.contrato_id === editandoId) return false;
+            const dataFinal = v.contratos?.data_final;
+            return !dataFinal || dataFinal >= hoje;
+        });
+
+        if(conflitos.length > 0){
+            const descricoes = conflitos
+                .map(c => todosVeiculos.find(v => v.id === c.veiculo_id))
+                .filter(Boolean)
+                .map(descricaoVeiculo)
+                .join(', ');
+            alert(`Não é possível salvar: o(s) veículo(s) ${descricoes || 'selecionado(s)'} já está(ão) em um contrato ativo.`);
+            return;
+        }
+
+    }
+
     const dados = {
         cliente_id: Number(clienteId),
         data_inicial: dataInicial || null,
@@ -335,9 +412,8 @@ async function salvar(){
         return;
     }
 
-    // Recria a lista de veículos vinculados a partir dos veículos adicionados na tela.
-    const idsSelecionados = veiculosSelecionados();
-
+    // Recria a lista de veículos vinculados a partir dos veículos adicionados na tela
+    // (idsSelecionados já validado acima, contra conflito de contrato ativo).
     const {error: erroLimpeza} = await supabaseClient
         .from('contratos_veiculos')
         .delete()
