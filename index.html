@@ -216,6 +216,20 @@
     </div>
 </div>
 
+<script>
+// Decide login/dashboard IMEDIATAMENTE, sem esperar os scripts externos
+// (Supabase/Bootstrap) carregarem da CDN. Sem isso, o navegador pinta o
+// estado padrão do HTML (login visível) e só troca para o dashboard quando
+// checarLogin() roda no final do script da página - o que demora até os
+// CDNs responderem, causando o "flash" do formulário de login ao trocar
+// de aba/página mesmo já estando logado.
+(function(){
+    var logado = localStorage.getItem('logado') === 'sim';
+    document.getElementById('loginBox').classList.toggle('d-none', logado);
+    document.getElementById('dashboard').classList.toggle('d-none', !logado);
+})();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
