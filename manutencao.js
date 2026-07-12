@@ -111,8 +111,10 @@ async function carregar(){
             <td>${m.data_saida ? new Date(m.data_saida + 'T00:00:00').toLocaleDateString('pt-BR') : ''}</td>
 
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editar(${m.id})">Editar</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="excluir(${m.id})">Excluir</button>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary" title="Editar" onclick="editar(${m.id})"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="excluir(${m.id})"><i class="bi bi-trash"></i></button>
+                </div>
             </td>
 
         </tr>

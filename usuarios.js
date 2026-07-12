@@ -37,8 +37,10 @@ async function carregar(){
             <td>${criadoEm}</td>
 
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editar('${u.usuario}')">Trocar senha</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="excluir('${u.usuario}')">Excluir</button>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary" title="Trocar senha" onclick="editar('${u.usuario}')"><i class="bi bi-key"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="excluir('${u.usuario}')"><i class="bi bi-trash"></i></button>
+                </div>
             </td>
 
         </tr>

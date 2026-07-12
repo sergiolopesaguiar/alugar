@@ -40,8 +40,10 @@ async function carregar(){
             <td>${fim}</td>
             <td>${c.observacao ?? ''}</td>
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editar(${c.id})">Editar</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="excluir(${c.id})">Excluir</button>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary" title="Editar" onclick="editar(${c.id})"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="excluir(${c.id})"><i class="bi bi-trash"></i></button>
+                </div>
             </td>
         </tr>
         `;

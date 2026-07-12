@@ -52,7 +52,7 @@ async function carregar(){
         // existe dado da Receita Federal para mostrar; CPF nunca tem esse dado.
         const ehCnpj = (c.cpf_cnpj ?? '').replace(/\D/g,'').length === 14;
         const botaoReceita = ehCnpj
-            ? `<button class="btn btn-sm btn-outline-secondary me-1" onclick="verDetalhesReceita(${c.id})">Receita</button>`
+            ? `<button class="btn btn-sm btn-outline-secondary" title="Receita" onclick="verDetalhesReceita(${c.id})"><i class="bi bi-file-earmark-text"></i></button>`
             : '';
 
         html+=`
@@ -82,9 +82,11 @@ async function carregar(){
             <td>${c.cidade??''}</td>
 
             <td>
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="editar(${c.id})">Editar</button>
-                ${botaoReceita}
-                <button class="btn btn-sm btn-outline-danger" onclick="excluir(${c.id})">Excluir</button>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary" title="Editar" onclick="editar(${c.id})"><i class="bi bi-pencil-square"></i></button>
+                    ${botaoReceita}
+                    <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="excluir(${c.id})"><i class="bi bi-trash"></i></button>
+                </div>
             </td>
 
         </tr>
