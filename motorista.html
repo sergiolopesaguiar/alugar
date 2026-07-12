@@ -71,9 +71,16 @@
 
             <div class="sidebar-titulo d-none d-md-block">Menu</div>
 
-            <a href="index.html" class="sidebar-link">Clientes</a>
-            <a href="veiculos.html" class="sidebar-link">Veículos</a>
-            <a href="motorista.html" class="sidebar-link active">Motorista</a>
+            <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuCadastros" role="button" aria-expanded="true" aria-controls="menuCadastros">
+                <span>Cadastros</span>
+                <span class="menu-caret">&#9662;</span>
+            </a>
+            <div class="collapse show" id="menuCadastros">
+                <a href="index.html" class="sidebar-link sidebar-sublink">Clientes</a>
+                <a href="veiculos.html" class="sidebar-link sidebar-sublink">Veículos</a>
+                <a href="motorista.html" class="sidebar-link sidebar-sublink active">Motorista</a>
+            </div>
+
             <a href="manutencao.html" class="sidebar-link">Manutenção</a>
 
         </div>

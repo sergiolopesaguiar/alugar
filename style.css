@@ -90,3 +90,25 @@ table{
     font-weight:bold;
 
 }
+
+/* Grupo "Cadastros" (Clientes/Veículos/Motorista) no menu lateral */
+
+.sidebar-sublink{
+
+    padding-left:2.25rem;
+    font-size:.92rem;
+
+}
+
+.menu-caret{
+
+    display:inline-block;
+    transition:transform .2s ease;
+
+}
+
+.sidebar-group-toggle.collapsed .menu-caret{
+
+    transform:rotate(-90deg);
+
+}
