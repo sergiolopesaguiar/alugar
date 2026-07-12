@@ -7,7 +7,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Sistema - Clientes</title>
+    <title>Sistema - Motorista</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -71,9 +71,9 @@
 
             <div class="sidebar-titulo d-none d-md-block">Menu</div>
 
-            <a href="index.html" class="sidebar-link active">Clientes</a>
+            <a href="index.html" class="sidebar-link">Clientes</a>
             <a href="veiculos.html" class="sidebar-link">Veículos</a>
-            <a href="motorista.html" class="sidebar-link">Motorista</a>
+            <a href="motorista.html" class="sidebar-link active">Motorista</a>
             <a href="manutencao.html" class="sidebar-link">Manutenção</a>
 
         </div>
@@ -86,7 +86,7 @@
 
             <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
 
-                <h3 class="mb-0 h4">Clientes</h3>
+                <h3 class="mb-0 h4">Veículos &gt; Motorista</h3>
 
                 <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair</button>
 
@@ -96,16 +96,14 @@
 
                 <div class="row g-2 mb-2">
 
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="cpfCnpj" class="form-control" placeholder="CPF ou CNPJ" maxlength="18">
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <select id="veiculoId" class="form-select">
+                            <option value="" selected disabled>Veículo</option>
+                        </select>
                     </div>
 
-                    <div class="col-12 col-sm-6 col-md-4">
-                        <input id="nome" class="form-control" placeholder="Nome">
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="email" type="email" class="form-control" placeholder="Email">
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <input id="nomeMotorista" class="form-control" placeholder="Nome do motorista">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
@@ -113,7 +111,11 @@
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
-                        <input id="cep" class="form-control" placeholder="CEP" maxlength="9">
+                        <input id="cnh" class="form-control" placeholder="CNH">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <input id="vencimentoCnh" type="date" class="form-control" placeholder="Vencimento CNH" title="Vencimento da CNH do Motorista">
                     </div>
 
                 </div>
@@ -121,32 +123,11 @@
                 <div class="row g-2 mb-3">
 
                     <div class="col-12 col-sm-6 col-md-4">
-                        <input id="logradouro" class="form-control" placeholder="Logradouro">
+                        <input id="regiaoMotorista" class="form-control" placeholder="Região do motorista">
                     </div>
 
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <input id="bairro" class="form-control" placeholder="Bairro">
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-1">
-                        <select id="uf" class="form-select">
-                            <option value="" selected disabled>UF</option>
-                            <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
-                            <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
-                            <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
-                            <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
-                            <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
-                            <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
-                            <option>SP</option><option>SE</option><option>TO</option>
-                        </select>
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="cidade" class="form-control" placeholder="Cidade">
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="numeroEndereco" class="form-control" placeholder="Número">
+                    <div class="col-12 col-md-8">
+                        <textarea id="observacao" class="form-control" placeholder="Observação" rows="1"></textarea>
                     </div>
 
                 </div>
@@ -172,16 +153,13 @@
                             <tr>
 
                                 <th>ID</th>
-                                <th>Nome</th>
-                                <th>CPF/CNPJ</th>
-                                <th>Email</th>
+                                <th>Veículo</th>
+                                <th>Motorista</th>
                                 <th>Telefone</th>
-                                <th>CEP</th>
-                                <th>Logradouro</th>
-                                <th>Número</th>
-                                <th>Bairro</th>
-                                <th>UF</th>
-                                <th>Cidade</th>
+                                <th>CNH</th>
+                                <th title="Vencimento da CNH do Motorista">Vencimento CNH</th>
+                                <th>Região</th>
+                                <th>Observação</th>
                                 <th>Ações</th>
 
                             </tr>
@@ -204,25 +182,13 @@
 
 </div>
 
-<div class="modal fade" id="modalReceita" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Dados da Receita Federal</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body" id="modalReceitaCorpo"></div>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
 <script src="auth.js"></script>
 
-<script src="app.js"></script>
+<script src="motorista.js"></script>
 
 </body>
 

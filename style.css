@@ -1,0 +1,92 @@
+body{
+
+    background:#f4f6f9;
+
+}
+
+.card{
+
+    border-radius:12px;
+
+}
+
+table{
+
+    font-size:14px;
+
+}
+
+.botao-salvar{
+
+    width:100%;
+
+}
+
+@media (min-width: 576px){
+
+    .botao-salvar{
+        width:auto;
+    }
+
+}
+
+@media (max-width: 575.98px){
+
+    .card-body{
+        padding:1rem;
+    }
+
+    input, .btn{
+        font-size:16px;
+    }
+
+}
+
+/* Menu lateral */
+
+#dashboard{
+
+    min-height:100vh;
+
+}
+
+.sidebar{
+
+    width:220px;
+
+    flex-shrink:0;
+
+}
+
+.sidebar-titulo{
+
+    padding:1rem;
+    font-weight:bold;
+    border-bottom:1px solid rgba(255,255,255,.15);
+
+}
+
+.sidebar-link{
+
+    display:block;
+    padding:.75rem 1rem;
+    color:#fff;
+    text-decoration:none;
+    border-left:3px solid transparent;
+
+}
+
+.sidebar-link:hover{
+
+    background:rgba(255,255,255,.08);
+    color:#fff;
+
+}
+
+.sidebar-link.active{
+
+    background:rgba(255,255,255,.12);
+    border-left-color:#0d6efd;
+    font-weight:bold;
+
+}
