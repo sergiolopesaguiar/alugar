@@ -1,22 +1,76 @@
 // Lógica da página de Condutor.
 // Login, logout e supabaseClient ficam em auth.js (compartilhado).
 //
-// Cadastro simples e independente (sem FK pra veiculos) - diferente de
-// veiculos_motorista, que vincula um motorista a um veículo específico.
-// Condutor aqui é um cadastro geral de pessoas com um período
-// (data_inicio/data_fim), útil por exemplo pra quem dirige por um contrato
-// ou período sem estar preso a um veículo fixo.
+// Diferente de veiculos_motorista (que também liga uma pessoa a um
+// veículo), Condutor tem um período (data_inicio/data_fim) e agora é
+// SEMPRE amarrado a um veículo (veiculo_id) - exigido na validação do
+// formulário. A coluna em si ficou nullable no banco porque já existiam
+// ~39 condutores cadastrados sem veículo antes desta mudança; forçar
+// NOT NULL quebraria esses registros. Editar qualquer condutor antigo
+// agora exige escolher um veículo antes de salvar de novo.
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'condutor';
 
 let editandoId = null;
+let condutorDocumentosAtual = null; // id do condutor com o modal de documentos aberto
+
+// Aplica máscara (00) 00000-0000 / (00) 0000-0000 enquanto o usuário digita.
+function formatarTelefone(valor){
+    let d = valor.replace(/\D/g, '').slice(0, 11);
+    if(d.length > 10){
+        return d.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').trim().replace(/-$/, '');
+    }
+    if(d.length > 6){
+        return d.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').trim().replace(/-$/, '');
+    }
+    if(d.length > 2){
+        return d.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+    }
+    if(d.length > 0){
+        return d.replace(/(\d{0,2})/, '($1');
+    }
+    return '';
+}
+
+// Preenche o <select> de veículos, mostrando Placa - Fabricante Modelo.
+async function carregarVeiculos(){
+
+    const {data, error} = await supabaseClient
+        .from('veiculos')
+        .select('id, placa, fabricante, modelo')
+        .order('placa');
+
+    const select = document.getElementById('veiculoId');
+    const valorAtual = select.value;
+
+    if(error){
+        select.innerHTML = '<option value="" selected disabled>Erro ao carregar veículos</option>';
+        return;
+    }
+
+    let html = '<option value="" selected disabled>Selecione o veículo...</option>';
+
+    (data || []).forEach(v => {
+        const rotulo = [v.placa, [v.fabricante, v.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ');
+        html += `<option value="${v.id}">${rotulo}</option>`;
+    });
+
+    select.innerHTML = html;
+
+    if(valorAtual){
+        select.value = valorAtual;
+    }
+
+}
 
 async function carregar(){
 
+    await carregarVeiculos();
+
     const {data, error} = await supabaseClient
         .from('condutores')
-        .select('*')
+        .select('*, veiculos(placa, fabricante, modelo)')
         .order('id');
 
     if(error){
@@ -30,17 +84,23 @@ async function carregar(){
 
         const inicio = c.data_inicio ? new Date(c.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR') : '';
         const fim = c.data_fim ? new Date(c.data_fim + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+        const veiculo = c.veiculos
+            ? [c.veiculos.placa, [c.veiculos.fabricante, c.veiculos.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ')
+            : '<span class="text-danger">(sem veículo)</span>';
 
         html += `
         <tr>
             <td>${c.id}</td>
             <td>${c.nome}</td>
+            <td>${veiculo}</td>
             <td>${c.telefone ?? ''}</td>
+            <td>${c.regiao ?? ''}</td>
             <td>${inicio}</td>
             <td>${fim}</td>
             <td>${c.observacao ?? ''}</td>
             <td>
                 <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-secondary" title="Documentos" onclick="abrirDocumentos(${c.id}, '${c.nome.replace(/'/g, "\\'")}')"><i class="bi bi-folder2-open"></i></button>
                     <button class="btn btn-sm btn-outline-primary" title="Editar" onclick="editar(${c.id})"><i class="bi bi-pencil-square"></i></button>
                     <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="excluir(${c.id})"><i class="bi bi-trash"></i></button>
                 </div>
@@ -70,7 +130,9 @@ async function editar(id){
     editandoId = id;
 
     document.getElementById("nome").value = data.nome ?? '';
+    document.getElementById("veiculoId").value = data.veiculo_id ?? '';
     document.getElementById("telefone").value = data.telefone ?? '';
+    document.getElementById("regiao").value = data.regiao ?? '';
     document.getElementById("data_inicio").value = data.data_inicio ?? '';
     document.getElementById("data_fim").value = data.data_fim ?? '';
     document.getElementById("observacao").value = data.observacao ?? '';
@@ -85,7 +147,9 @@ function cancelarEdicao(){
     editandoId = null;
 
     document.getElementById("nome").value = '';
+    document.getElementById("veiculoId").value = '';
     document.getElementById("telefone").value = '';
+    document.getElementById("regiao").value = '';
     document.getElementById("data_inicio").value = '';
     document.getElementById("data_fim").value = '';
     document.getElementById("observacao").value = '';
@@ -105,7 +169,7 @@ async function excluir(id){
 
     const nome = data?.nome || '(sem nome)';
 
-    if(!confirm(`Excluir o condutor "${nome}"? Essa ação não pode ser desfeita.`)){
+    if(!confirm(`Excluir o condutor "${nome}"? Essa ação não pode ser desfeita. Os documentos anexados também serão apagados.`)){
         return;
     }
 
@@ -130,7 +194,9 @@ async function excluir(id){
 async function salvar(){
 
     const nome = document.getElementById("nome").value.trim();
+    const veiculoId = document.getElementById("veiculoId").value;
     const telefone = document.getElementById("telefone").value;
+    const regiao = document.getElementById("regiao").value.trim();
     const dataInicio = document.getElementById("data_inicio").value;
     const dataFim = document.getElementById("data_fim").value;
     const observacao = document.getElementById("observacao").value;
@@ -140,9 +206,17 @@ async function salvar(){
         return;
     }
 
+    // Regra pedida pelo Sérgio: condutor sempre amarrado a um veículo.
+    if(!veiculoId){
+        alert('Selecione o veículo. Todo condutor precisa estar vinculado a um veículo.');
+        return;
+    }
+
     const dados = {
         nome,
+        veiculo_id: Number(veiculoId),
         telefone: telefone || null,
+        regiao: regiao || null,
         data_inicio: dataInicio || null,
         data_fim: dataFim || null,
         observacao: observacao || null
@@ -175,5 +249,161 @@ async function salvar(){
     carregar();
 
 }
+
+// ---------------------------------------------------------------------
+// Documentos do condutor (modal). Arquivos ficam no bucket público
+// "condutor-documentos" do Supabase Storage (mesma convenção de acesso
+// aberto usada no resto do sistema - sem login extra pra baixar o link).
+// Metadados (tipo, nome, caminho) ficam na tabela condutor_documentos.
+// ---------------------------------------------------------------------
+
+async function abrirDocumentos(condutorId, nomeCondutor){
+
+    condutorDocumentosAtual = condutorId;
+
+    document.getElementById('modalDocumentosTitulo').textContent = `Documentos - ${nomeCondutor}`;
+    document.getElementById('docTipo').value = '';
+    document.getElementById('docArquivo').value = '';
+
+    await carregarDocumentos();
+
+    new bootstrap.Modal(document.getElementById('modalDocumentos')).show();
+
+}
+
+async function carregarDocumentos(){
+
+    if(!condutorDocumentosAtual){
+        return;
+    }
+
+    const {data, error} = await supabaseClient
+        .from('condutor_documentos')
+        .select('*')
+        .eq('condutor_id', condutorDocumentosAtual)
+        .order('id');
+
+    if(error){
+        alert(error.message);
+        return;
+    }
+
+    let html = '';
+
+    if(!data || data.length === 0){
+        html = '<tr><td colspan="4" class="text-muted">Nenhum documento anexado ainda.</td></tr>';
+    }
+
+    (data || []).forEach(doc => {
+
+        const {data: urlData} = supabaseClient.storage
+            .from('condutor-documentos')
+            .getPublicUrl(doc.arquivo_path);
+
+        const enviadoEm = doc.criado_em ? new Date(doc.criado_em).toLocaleString('pt-BR') : '';
+
+        html += `
+        <tr>
+            <td>${doc.tipo_documento ?? '(sem tipo)'}</td>
+            <td><a href="${urlData.publicUrl}" target="_blank" rel="noopener">${doc.arquivo_nome ?? 'Abrir'}</a></td>
+            <td>${enviadoEm}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="excluirDocumento(${doc.id}, '${doc.arquivo_path}')"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>
+        `;
+
+    });
+
+    document.getElementById('listaDocumentos').innerHTML = html;
+
+}
+
+async function enviarDocumento(){
+
+    const tipo = document.getElementById('docTipo').value.trim();
+    const campoArquivo = document.getElementById('docArquivo');
+    const arquivo = campoArquivo.files[0];
+
+    if(!arquivo){
+        alert('Selecione um arquivo.');
+        return;
+    }
+
+    if(!condutorDocumentosAtual){
+        return;
+    }
+
+    const caminho = `${condutorDocumentosAtual}/${Date.now()}_${arquivo.name}`;
+
+    const {error: erroUpload} = await supabaseClient.storage
+        .from('condutor-documentos')
+        .upload(caminho, arquivo);
+
+    if(erroUpload){
+        alert('Erro ao enviar o arquivo: ' + erroUpload.message);
+        return;
+    }
+
+    const {error: erroInsert} = await supabaseClient
+        .from('condutor_documentos')
+        .insert({
+            condutor_id: condutorDocumentosAtual,
+            tipo_documento: tipo || null,
+            arquivo_nome: arquivo.name,
+            arquivo_path: caminho
+        });
+
+    if(erroInsert){
+        alert('Arquivo enviado, mas houve erro ao registrar: ' + erroInsert.message);
+    }
+
+    document.getElementById('docTipo').value = '';
+    campoArquivo.value = '';
+
+    carregarDocumentos();
+
+}
+
+async function excluirDocumento(id, caminho){
+
+    if(!confirm('Excluir este documento? Essa ação não pode ser desfeita.')){
+        return;
+    }
+
+    const {error: erroStorage} = await supabaseClient.storage
+        .from('condutor-documentos')
+        .remove([caminho]);
+
+    if(erroStorage){
+        alert('Erro ao excluir o arquivo: ' + erroStorage.message);
+        return;
+    }
+
+    const {error: erroDelete} = await supabaseClient
+        .from('condutor_documentos')
+        .delete()
+        .eq('id', id);
+
+    if(erroDelete){
+        alert(erroDelete.message);
+        return;
+    }
+
+    carregarDocumentos();
+
+}
+
+// Máscara de telefone em tempo real.
+document.addEventListener('DOMContentLoaded', () => {
+
+    const campoTelefone = document.getElementById('telefone');
+    if(campoTelefone){
+        campoTelefone.addEventListener('input', (e) => {
+            e.target.value = formatarTelefone(e.target.value);
+        });
+    }
+
+});
 
 checarLogin();

@@ -210,7 +210,8 @@ async function salvar(){
     const veiculoId = document.getElementById("veiculoId").value;
     const oficina = document.getElementById("oficina").value.trim();
     const telefone = document.getElementById("telefone").value.trim();
-    const email = document.getElementById("email").value.trim();
+    // Pedido do Sérgio: email de manutenção sempre gravado em minúsculo.
+    const email = document.getElementById("email").value.trim().toLowerCase();
     const responsavel = document.getElementById("responsavel").value.trim();
     const dataEntrada = document.getElementById("data_entrada").value;
     const dataSaida = document.getElementById("data_saida").value;
@@ -270,6 +271,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if(campoTelefone){
         campoTelefone.addEventListener('input', (e) => {
             e.target.value = formatarTelefone(e.target.value);
+        });
+    }
+
+    // Email sempre em minúsculo, já enquanto o usuário digita (além da
+    // garantia em salvar(), para o campo nunca mostrar maiúsculas na tela).
+    const campoEmail = document.getElementById('email');
+    if(campoEmail){
+        campoEmail.addEventListener('input', (e) => {
+            const inicio = e.target.selectionStart;
+            const fim = e.target.selectionEnd;
+            e.target.value = e.target.value.toLowerCase();
+            e.target.setSelectionRange(inicio, fim);
         });
     }
 

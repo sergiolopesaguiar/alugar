@@ -13,11 +13,28 @@ const supabaseClient = window.supabase.createClient(
 function mostrarDashboard(){
     document.getElementById('loginBox').classList.add('d-none');
     document.getElementById('dashboard').classList.remove('d-none');
+    atualizarStatusBar();
 }
 
 function mostrarLogin(){
     document.getElementById('loginBox').classList.remove('d-none');
     document.getElementById('dashboard').classList.add('d-none');
+    const statusBar = document.getElementById('statusBar');
+    if(statusBar){
+        statusBar.classList.add('d-none');
+    }
+}
+
+// Barra de status no rodapé, mostrando o nome do usuário logado neste
+// navegador. Some junto com o dashboard quando ninguém está logado.
+function atualizarStatusBar(){
+    const statusBar = document.getElementById('statusBar');
+    const spanUsuario = document.getElementById('statusBarUsuario');
+    if(!statusBar || !spanUsuario){
+        return;
+    }
+    spanUsuario.textContent = localStorage.getItem('usuarioLogado') || '';
+    statusBar.classList.remove('d-none');
 }
 
 // Login contra a tabela própria "usuarios". A verificação de senha roda

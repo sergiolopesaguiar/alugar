@@ -44,6 +44,44 @@ function formatarCEP(valor){
     return d;
 }
 
+// BrasilAPI (dados públicos da Receita Federal, gratuita, sem chave) - mesma API
+// já usada em app.js (Clientes) para consultarCNPJ(). Aqui preenche só os campos
+// que existem na tabela fornecedores: Nome, CEP, Cidade, Bairro e Telefone (se a
+// Receita tiver um telefone cadastrado). Só roda com os 14 dígitos completos.
+async function consultarCNPJFornecedor(){
+
+    const campoCnpj = document.getElementById('cnpj');
+    const digitos = campoCnpj.value.replace(/\D/g, '');
+
+    if(digitos.length !== 14){
+        return;
+    }
+
+    try{
+
+        const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digitos}`);
+        const dados = await resp.json();
+
+        if(!resp.ok){
+            alert(dados.message || 'CNPJ não encontrado.');
+            return;
+        }
+
+        document.getElementById('nome').value = dados.nome_fantasia || dados.razao_social || '';
+        document.getElementById('cep').value = formatarCEP(dados.cep ?? '');
+        document.getElementById('cidade').value = dados.municipio ?? '';
+        document.getElementById('bairro').value = dados.bairro ?? '';
+
+        if(dados.ddd_telefone_1){
+            document.getElementById('telefone').value = formatarTelefone(dados.ddd_telefone_1);
+        }
+
+    } catch(e){
+        alert('Não foi possível consultar o CNPJ agora. Preencha os dados manualmente.');
+    }
+
+}
+
 // ViaCEP (público, gratuito, sem chave) - preenche só Cidade/Bairro aqui
 // (fornecedor não tem campos de Logradouro/Número/UF no cadastro).
 async function consultarCEP(){
@@ -251,6 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
         campoCnpj.addEventListener('input', (e) => {
             e.target.value = formatarCnpj(e.target.value);
         });
+        campoCnpj.addEventListener('blur', consultarCNPJFornecedor);
     }
 
     const campoTelefone = document.getElementById('telefone');

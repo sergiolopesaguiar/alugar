@@ -82,10 +82,11 @@
             </a>
             <div class="collapse show" id="menuCadastros">
                 <a href="index.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
-                <a href="veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="veiculos">Veículos</a>
-                <a href="motorista.html" class="sidebar-link sidebar-sublink" data-rotina="motorista">Motorista</a>
                 <a href="condutor.html" class="sidebar-link sidebar-sublink active" data-rotina="condutor">Condutor</a>
                 <a href="contratos.html" class="sidebar-link sidebar-sublink" data-rotina="contratos">Contratos</a>
+                <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
+                <a href="motorista.html" class="sidebar-link sidebar-sublink" data-rotina="motorista">Motorista</a>
+                <a href="veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="veiculos">Veículos</a>
             </div>
 
             <a href="manutencao.html" class="sidebar-link" data-rotina="manutencao">Manutenção</a>
@@ -106,7 +107,6 @@
             </a>
             <div class="collapse show" id="menuFinanceiro">
                 <a href="faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="faturamento">Faturamento</a>
-                <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
                 <a href="conta-contabil.html" class="sidebar-link sidebar-sublink" data-rotina="conta_contabil">Conta Contábil</a>
                 <a href="contas-pagar.html" class="sidebar-link sidebar-sublink" data-rotina="contas_pagar">Contas a Pagar</a>
             </div>
@@ -143,23 +143,40 @@
                 <div class="row g-2 mb-3">
 
                     <div class="col-12 col-sm-6 col-md-3">
-                        <input id="nome" class="form-control" placeholder="Nome">
+                        <input id="nome" class="form-control" placeholder="Nome" title="Nome completo do condutor">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0 small text-muted">Veículo</label>
+                        <select id="veiculoId" class="form-select" title="Veículo que este condutor dirige - obrigatório">
+                            <option value="" selected disabled>Selecione o veículo...</option>
+                        </select>
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
-                        <input id="telefone" class="form-control" placeholder="Telefone">
+                        <input id="telefone" class="form-control" placeholder="(00) 00000-0000" maxlength="15" title="Telefone de contato do condutor">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
-                        <input id="data_inicio" type="date" class="form-control" placeholder="Data início">
+                        <input id="regiao" class="form-control" placeholder="Região" title="Região principal onde este veículo/condutor circula">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
-                        <input id="data_fim" type="date" class="form-control" placeholder="Data fim">
+                        <label class="form-label mb-0 small text-muted">Início</label>
+                        <input id="data_inicio" type="date" class="form-control" title="Data de início do condutor neste veículo">
                     </div>
 
-                    <div class="col-12 col-md-3">
-                        <input id="observacao" class="form-control" placeholder="Observação">
+                </div>
+
+                <div class="row g-2 mb-3">
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Fim</label>
+                        <input id="data_fim" type="date" class="form-control" title="Data de fim do condutor neste veículo (deixe em branco se ainda ativo)">
+                    </div>
+
+                    <div class="col-12 col-md-10">
+                        <input id="observacao" class="form-control" placeholder="Observação" title="Observações gerais sobre este condutor">
                     </div>
 
                 </div>
@@ -186,7 +203,9 @@
 
                                 <th>ID</th>
                                 <th>Nome</th>
+                                <th>Veículo</th>
                                 <th>Telefone</th>
+                                <th>Região</th>
                                 <th>Início</th>
                                 <th>Fim</th>
                                 <th>Observação</th>
@@ -212,6 +231,59 @@
 
 </div>
 
+<!-- Modal de Documentos do Condutor: cópia da CNH, termo de responsabilidade,
+     ou qualquer outro arquivo relacionado a este condutor específico. -->
+<div class="modal fade" id="modalDocumentos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDocumentosTitulo">Documentos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row g-2 mb-3">
+
+                    <div class="col-12 col-sm-5">
+                        <input id="docTipo" class="form-control" placeholder="Tipo (ex: CNH, Termo de Responsabilidade)" title="Descreva o tipo deste documento">
+                    </div>
+
+                    <div class="col-12 col-sm-5">
+                        <input id="docArquivo" type="file" class="form-control" title="Selecione o arquivo (PDF, imagem, etc)">
+                    </div>
+
+                    <div class="col-12 col-sm-2">
+                        <button type="button" class="btn btn-primary w-100" onclick="enviarDocumento()">Enviar</button>
+                    </div>
+
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Arquivo</th>
+                                <th>Enviado em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaDocumentos"></tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="statusBar" class="status-bar d-none no-print">
+    Usuário logado: <strong id="statusBarUsuario"></strong>
+</div>
+
 <script>
 // Decide login/dashboard IMEDIATAMENTE, sem esperar os scripts externos
 // (Supabase/Bootstrap) carregarem da CDN - evita o "flash" do formulário
@@ -233,9 +305,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="auth.js?v=2"></script>
+<script src="auth.js?v=3"></script>
 
-<script src="condutor.js?v=1"></script>
+<script src="condutor.js?v=3"></script>
 
 </body>
 

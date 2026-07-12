@@ -170,7 +170,7 @@ table{
 
 @media print{
 
-    .sidebar, .sidebar-expand-btn, .no-print, nav.navbar{
+    .sidebar, .sidebar-expand-btn, .no-print, nav.navbar, .status-bar{
         display:none!important;
     }
 
@@ -183,5 +183,32 @@ table{
         box-shadow:none!important;
         border-radius:0!important;
     }
+
+}
+
+/* Barra de status fixa no rodapé, mostrando o usuário logado. Fica fora
+   do fluxo normal (position:fixed), então não empurra o conteúdo - por
+   isso cada página ganha um padding-bottom extra no #dashboard para o
+   conteúdo não ficar escondido atrás dela. Visibilidade controlada por
+   auth.js (mostrarDashboard()/mostrarLogin()), não pelo d-none do
+   #dashboard, para não depender de onde a div foi inserida no HTML. */
+
+#dashboard{
+
+    padding-bottom:2.25rem;
+
+}
+
+.status-bar{
+
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:1020;
+    background:#212529;
+    color:#fff;
+    font-size:.82rem;
+    padding:.35rem 1rem;
 
 }
