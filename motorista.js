@@ -3,6 +3,9 @@
 // Tabela veiculos_motorista: veiculo_id (FK para veiculos.id), nome_motorista,
 // telefone, cnh, vencimento_cnh, regiao_motorista, observacao (memo).
 
+// Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
+const ROTINA_ATUAL = 'motorista';
+
 let editandoId = null;
 
 // Aplica máscara (00) 00000-0000 / (00) 0000-0000 enquanto o usuário digita.

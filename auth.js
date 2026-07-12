@@ -56,9 +56,11 @@ async function login(){
     localStorage.setItem('usuarioLogado', usuario);
 
     mostrarDashboard();
+    aplicarEstadoMenu();
     if(typeof carregar === 'function'){
         carregar();
     }
+    aplicarPermissoes();
 }
 
 function logout(){
@@ -70,9 +72,11 @@ function logout(){
 function checarLogin(){
     if(localStorage.getItem('logado') === 'sim'){
         mostrarDashboard();
+        aplicarEstadoMenu();
         if(typeof carregar === 'function'){
             carregar();
         }
+        aplicarPermissoes();
     } else {
         mostrarLogin();
     }
@@ -83,3 +87,80 @@ function checarLogin(){
 // daquela página já exista quando checarLogin tentar chamá-la (auth.js
 // carrega antes do script da página, então "carregar" ainda não existiria
 // se chamássemos checarLogin() diretamente aqui).
+
+// ---------------------------------------------------------------------
+// Splitter do menu lateral: esconder/mostrar a sidebar inteira (desktop).
+// Estado gravado em localStorage para persistir entre páginas/recarregamentos.
+// O estado também é aplicado bem cedo, num script inline no <head>/topo de
+// cada página (antes dos CDNs carregarem), para não "piscar" a sidebar
+// aberta e depois fechar - aqui só reaplicamos por garantia após o dashboard
+// aparecer (ex: repovoado depois do login()).
+// ---------------------------------------------------------------------
+function aplicarEstadoMenu(){
+    const colapsado = localStorage.getItem('menuColapsado') === 'sim';
+    const sidebar = document.getElementById('sidebarMenu');
+    const btnExpandir = document.getElementById('btnExpandirMenu');
+    if(sidebar){
+        sidebar.classList.toggle('colapsado', colapsado);
+    }
+    if(btnExpandir){
+        btnExpandir.classList.toggle('mostrar', colapsado);
+    }
+}
+
+function alternarMenu(){
+    const colapsadoAtual = localStorage.getItem('menuColapsado') === 'sim';
+    localStorage.setItem('menuColapsado', colapsadoAtual ? 'nao' : 'sim');
+    aplicarEstadoMenu();
+}
+
+// ---------------------------------------------------------------------
+// Permissões por rotina (tabela usuarios_rotinas). A ausência de uma linha
+// para (usuario, rotina) significa "liberado" - só existe registro quando
+// alguém explicitamente troca o padrão na tela Usuário > Rotina. Por isso,
+// hoje (sem nenhuma linha na tabela ainda), tudo continua liberado para
+// todo mundo, como pedido.
+//
+// Cada página define sua própria constante ROTINA_ATUAL (ex: 'clientes' em
+// app.js, 'veiculos' em veiculos.js) para sabermos se a página corrente deve
+// ser bloqueada. Links do menu com atributo data-rotina são escondidos
+// automaticamente quando a rotina correspondente estiver negada.
+// ---------------------------------------------------------------------
+async function aplicarPermissoes(){
+
+    const usuario = localStorage.getItem('usuarioLogado');
+    if(!usuario){
+        return;
+    }
+
+    const {data, error} = await supabaseClient.rpc('listar_permissoes_usuario', {p_usuario: usuario});
+
+    if(error){
+        console.error('Falha ao carregar permissões:', error.message);
+        return;
+    }
+
+    const negadas = (data || [])
+        .filter(linha => linha.liberado === false)
+        .map(linha => linha.rotina);
+
+    document.querySelectorAll('[data-rotina]').forEach(el => {
+        if(negadas.includes(el.getAttribute('data-rotina'))){
+            el.classList.add('d-none');
+        } else {
+            el.classList.remove('d-none');
+        }
+    });
+
+    if(typeof ROTINA_ATUAL !== 'undefined' && negadas.includes(ROTINA_ATUAL)){
+        bloquearAcessoRotina();
+    }
+
+}
+
+function bloquearAcessoRotina(){
+    const corpo = document.querySelector('#dashboard .card-body');
+    if(corpo){
+        corpo.innerHTML = '<div class="alert alert-danger mb-0">Você não tem permissão para acessar esta rotina. Fale com um administrador em Usuário &gt; Rotina.</div>';
+    }
+}

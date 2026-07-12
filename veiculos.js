@@ -9,6 +9,9 @@
 // exigem CNPJ. Ver memória do projeto para detalhes caso isso mude no
 // futuro.
 
+// Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
+const ROTINA_ATUAL = 'veiculos';
+
 let editandoId = null;
 
 async function carregar(){

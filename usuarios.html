@@ -7,7 +7,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Sistema - Motorista</title>
+    <title>Sistema - Usuários</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -81,7 +81,7 @@
             <div class="collapse show" id="menuCadastros">
                 <a href="index.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
                 <a href="veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="veiculos">Veículos</a>
-                <a href="motorista.html" class="sidebar-link sidebar-sublink active" data-rotina="motorista">Motorista</a>
+                <a href="motorista.html" class="sidebar-link sidebar-sublink" data-rotina="motorista">Motorista</a>
             </div>
 
             <a href="manutencao.html" class="sidebar-link" data-rotina="manutencao">Manutenção</a>
@@ -91,7 +91,7 @@
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuAdministracao">
-                <a href="usuarios.html" class="sidebar-link sidebar-sublink">Usuários</a>
+                <a href="usuarios.html" class="sidebar-link sidebar-sublink active">Usuários</a>
                 <a href="permissoes.html" class="sidebar-link sidebar-sublink">Permissões</a>
             </div>
 
@@ -107,7 +107,7 @@
 
             <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
 
-                <h3 class="mb-0 h4">Veículos &gt; Motorista</h3>
+                <h3 class="mb-0 h4">Usuários</h3>
 
                 <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair</button>
 
@@ -115,40 +115,14 @@
 
             <div class="card-body">
 
-                <div class="row g-2 mb-2">
-
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <select id="veiculoId" class="form-select">
-                            <option value="" selected disabled>Veículo</option>
-                        </select>
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <input id="nomeMotorista" class="form-control" placeholder="Nome do motorista">
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="telefone" class="form-control" placeholder="(00) 00000-0000" maxlength="15">
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="cnh" class="form-control" placeholder="CNH">
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="vencimentoCnh" type="date" class="form-control" placeholder="Vencimento CNH" title="Vencimento da CNH do Motorista">
-                    </div>
-
-                </div>
-
                 <div class="row g-2 mb-3">
 
                     <div class="col-12 col-sm-6 col-md-4">
-                        <input id="regiaoMotorista" class="form-control" placeholder="Região do motorista">
+                        <input id="usuario" class="form-control" placeholder="Usuário">
                     </div>
 
-                    <div class="col-12 col-md-8">
-                        <textarea id="observacao" class="form-control" placeholder="Observação" rows="1"></textarea>
+                    <div class="col-12 col-sm-6 col-md-4">
+                        <input id="senha" type="password" class="form-control" placeholder="Senha">
                     </div>
 
                 </div>
@@ -174,13 +148,8 @@
                             <tr>
 
                                 <th>ID</th>
-                                <th>Veículo</th>
-                                <th>Motorista</th>
-                                <th>Telefone</th>
-                                <th>CNH</th>
-                                <th title="Vencimento da CNH do Motorista">Vencimento CNH</th>
-                                <th>Região</th>
-                                <th>Observação</th>
+                                <th>Usuário</th>
+                                <th>Criado em</th>
                                 <th>Ações</th>
 
                             </tr>
@@ -226,7 +195,7 @@
 
 <script src="auth.js"></script>
 
-<script src="motorista.js"></script>
+<script src="usuarios.js"></script>
 
 </body>
 

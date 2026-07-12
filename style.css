@@ -55,6 +55,7 @@ table{
     width:220px;
 
     flex-shrink:0;
+    transition:width .15s ease;
 
 }
 
@@ -110,5 +111,55 @@ table{
 .sidebar-group-toggle.collapsed .menu-caret{
 
     transform:rotate(-90deg);
+
+}
+
+/* Splitter: esconder/mostrar a sidebar inteira (só faz sentido no desktop -
+   no celular o menu já usa o offcanvas com o botão de hamburguer). */
+
+@media (min-width:768px){
+
+    .sidebar.colapsado{
+        width:0!important;
+        min-width:0;
+        overflow:hidden;
+        padding:0;
+        border:0;
+    }
+
+}
+
+.btn-colapsar-menu{
+
+    background:none;
+    border:none;
+    color:#fff;
+    opacity:.75;
+    line-height:1;
+    padding:.25rem;
+
+}
+
+.btn-colapsar-menu:hover{
+
+    opacity:1;
+
+}
+
+.sidebar-expand-btn{
+
+    display:none;
+    position:fixed;
+    top:14px;
+    left:14px;
+    z-index:1030;
+
+}
+
+@media (min-width:768px){
+
+    .sidebar-expand-btn.mostrar{
+        display:inline-flex;
+    }
 
 }

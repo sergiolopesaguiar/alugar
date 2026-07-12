@@ -69,23 +69,37 @@
 
         <div class="offcanvas-body d-md-flex flex-column p-0">
 
-            <div class="sidebar-titulo d-none d-md-block">Menu</div>
+            <div class="sidebar-titulo d-none d-md-flex justify-content-between align-items-center">
+                <span>Menu</span>
+                <button type="button" class="btn-colapsar-menu" onclick="alternarMenu()" title="Esconder menu">&#9664;</button>
+            </div>
 
             <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuCadastros" role="button" aria-expanded="true" aria-controls="menuCadastros">
                 <span>Cadastros</span>
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuCadastros">
-                <a href="index.html" class="sidebar-link sidebar-sublink">Clientes</a>
-                <a href="veiculos.html" class="sidebar-link sidebar-sublink">Veículos</a>
-                <a href="motorista.html" class="sidebar-link sidebar-sublink">Motorista</a>
+                <a href="index.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
+                <a href="veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="veiculos">Veículos</a>
+                <a href="motorista.html" class="sidebar-link sidebar-sublink" data-rotina="motorista">Motorista</a>
             </div>
 
-            <a href="manutencao.html" class="sidebar-link active">Manutenção</a>
+            <a href="manutencao.html" class="sidebar-link active" data-rotina="manutencao">Manutenção</a>
+
+            <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuAdministracao" role="button" aria-expanded="true" aria-controls="menuAdministracao">
+                <span>Administração</span>
+                <span class="menu-caret">&#9662;</span>
+            </a>
+            <div class="collapse show" id="menuAdministracao">
+                <a href="usuarios.html" class="sidebar-link sidebar-sublink">Usuários</a>
+                <a href="permissoes.html" class="sidebar-link sidebar-sublink">Permissões</a>
+            </div>
 
         </div>
 
     </div>
+
+    <button type="button" id="btnExpandirMenu" class="btn btn-dark btn-sm sidebar-expand-btn" onclick="alternarMenu()" title="Mostrar menu">&#9654;</button>
 
     <div class="flex-grow-1 p-3 p-md-4">
 
@@ -183,6 +197,12 @@
     var logado = localStorage.getItem('logado') === 'sim';
     document.getElementById('loginBox').classList.toggle('d-none', logado);
     document.getElementById('dashboard').classList.toggle('d-none', !logado);
+
+    var colapsado = localStorage.getItem('menuColapsado') === 'sim';
+    var sidebar = document.getElementById('sidebarMenu');
+    var btnExpandir = document.getElementById('btnExpandirMenu');
+    if(sidebar){ sidebar.classList.toggle('colapsado', colapsado); }
+    if(btnExpandir){ btnExpandir.classList.toggle('mostrar', colapsado); }
 })();
 </script>
 

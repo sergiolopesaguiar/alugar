@@ -1,6 +1,9 @@
 // Lógica específica da página de Clientes.
 // Login, logout e supabaseClient ficam em auth.js (compartilhado).
 
+// Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
+const ROTINA_ATUAL = 'clientes';
+
 let editandoId = null; // null = modo "novo cadastro"; com valor = editando esse id
 let dadosReceita = null; // guarda a resposta completa da BrasilAPI para o CNPJ em edição
 let clientesCache = []; // última lista carregada, usada pelo modal de detalhes da Receita
