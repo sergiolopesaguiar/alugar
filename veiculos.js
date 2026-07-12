@@ -52,6 +52,8 @@ async function carregar(){
 
             <td>${v.ano??''}</td>
 
+            <td>${v.status??''}</td>
+
             <td>
                 <button class="btn btn-sm btn-outline-primary" onclick="editar(${v.id})">Editar</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="excluir(${v.id})">Excluir</button>
@@ -94,6 +96,7 @@ async function editar(id){
     document.getElementById("data_compra").value = data.data_compra ?? '';
     document.getElementById("origem_compra").value = data.origem_compra ?? '';
     document.getElementById("observacao").value = data.observacao ?? '';
+    document.getElementById("status").value = data.status ?? 'Ativo';
 
     document.getElementById("btnSalvar").textContent = 'Atualizar';
     document.getElementById("btnCancelar").classList.remove('d-none');
@@ -116,6 +119,7 @@ function cancelarEdicao(){
     document.getElementById("data_compra").value='';
     document.getElementById("origem_compra").value='';
     document.getElementById("observacao").value='';
+    document.getElementById("status").value='Ativo';
 
     document.getElementById("btnSalvar").textContent = 'Salvar';
     document.getElementById("btnCancelar").classList.add('d-none');
@@ -173,6 +177,7 @@ async function salvar(){
     const dataCompra=document.getElementById("data_compra").value;
     const origemCompra=document.getElementById("origem_compra").value;
     const observacao=document.getElementById("observacao").value;
+    const status=document.getElementById("status").value;
 
     if(!placa){
         alert('Preencha a placa.');
@@ -203,7 +208,9 @@ async function salvar(){
 
         origem_compra: origemCompra || null,
 
-        observacao: observacao || null
+        observacao: observacao || null,
+
+        status: status || 'Ativo'
 
     };
 

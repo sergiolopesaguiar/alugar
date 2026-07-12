@@ -93,7 +93,9 @@
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuRelatorios">
+                <a href="relatorio-inventario-veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_inventario_veiculos">Inventário de Veículos</a>
                 <a href="relatorio-veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_veiculos">Veículos</a>
+                <a href="relatorio-faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_faturamento">Faturamento</a>
             </div>
 
             <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuAdministracao" role="button" aria-expanded="true" aria-controls="menuAdministracao">
@@ -128,7 +130,9 @@
                 <div class="row g-2 mb-3">
 
                     <div class="col-12 col-sm-6 col-md-3">
-                        <input id="cnpj" class="form-control" placeholder="CNPJ">
+                        <select id="cliente_id" class="form-select">
+                            <option value="" selected disabled>Selecione o cliente...</option>
+                        </select>
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
@@ -192,6 +196,7 @@
                             <tr>
 
                                 <th>ID</th>
+                                <th>Cliente</th>
                                 <th>CNPJ</th>
                                 <th>Início</th>
                                 <th>Fim</th>
@@ -242,7 +247,7 @@
 
 <script src="auth.js"></script>
 
-<script src="contratos.js?v=2"></script>
+<script src="contratos.js?v=3"></script>
 
 </body>
 

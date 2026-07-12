@@ -16,9 +16,39 @@
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'contratos';
 
+// Um contrato só pode ser feito para um cliente já cadastrado - por isso o
+// campo de cliente é um combobox (select) alimentado pela tabela clientes,
+// gravando cliente_id (FK) em vez de digitar o CNPJ à mão. O CNPJ exibido
+// na listagem vem do embedding do PostgREST (clientes.cpf_cnpj).
+
 let editandoId = null;
 let todosVeiculos = []; // {id, placa, modelo} - carregado uma vez
 let veiculosDoContrato = []; // ids dos veículos já adicionados ao contrato em edição/criação
+
+async function carregarClientesDisponiveis(){
+
+    const {data, error} = await supabaseClient
+        .from('clientes')
+        .select('id, nome, cpf_cnpj')
+        .order('nome');
+
+    const select = document.getElementById('cliente_id');
+
+    if(error){
+        select.innerHTML = '<option value="" selected disabled>Erro ao carregar clientes</option>';
+        return;
+    }
+
+    let html = '<option value="" selected disabled>Selecione o cliente...</option>';
+
+    (data || []).forEach(c => {
+        const rotulo = c.cpf_cnpj ? `${c.nome} - ${c.cpf_cnpj}` : c.nome;
+        html += `<option value="${c.id}">${rotulo}</option>`;
+    });
+
+    select.innerHTML = html;
+
+}
 
 async function carregarVeiculosDisponiveis(){
 
@@ -127,7 +157,7 @@ async function carregar(){
 
     const {data, error} = await supabaseClient
         .from('contratos')
-        .select('*, contratos_veiculos(veiculo_id, veiculos(placa))')
+        .select('*, clientes(nome, cpf_cnpj), contratos_veiculos(veiculo_id, veiculos(placa))')
         .order('id');
 
     if(error){
@@ -151,7 +181,8 @@ async function carregar(){
         html += `
         <tr>
             <td>${c.id}</td>
-            <td>${c.cnpj}</td>
+            <td>${c.clientes?.nome ?? ''}</td>
+            <td>${c.clientes?.cpf_cnpj ?? ''}</td>
             <td>${dataInicial}</td>
             <td>${dataFinal}</td>
             <td>${valor}</td>
@@ -184,7 +215,7 @@ async function editar(id){
 
     editandoId = id;
 
-    document.getElementById("cnpj").value = data.cnpj ?? '';
+    document.getElementById("cliente_id").value = data.cliente_id ?? '';
     document.getElementById("data_inicial").value = data.data_inicial ?? '';
     document.getElementById("data_final").value = data.data_final ?? '';
     document.getElementById("valor").value = data.valor ?? '';
@@ -204,7 +235,7 @@ async function cancelarEdicao(){
 
     editandoId = null;
 
-    document.getElementById("cnpj").value = '';
+    document.getElementById("cliente_id").value = '';
     document.getElementById("data_inicial").value = '';
     document.getElementById("data_final").value = '';
     document.getElementById("valor").value = '';
@@ -224,13 +255,13 @@ async function excluir(id){
 
     const {data} = await supabaseClient
         .from('contratos')
-        .select('cnpj')
+        .select('clientes(nome)')
         .eq('id', id)
         .single();
 
-    const cnpj = data?.cnpj || '(sem CNPJ)';
+    const nomeCliente = data?.clientes?.nome || '(sem cliente)';
 
-    if(!confirm(`Excluir o contrato #${id} - ${cnpj}? Essa ação não pode ser desfeita.`)){
+    if(!confirm(`Excluir o contrato #${id} - ${nomeCliente}? Essa ação não pode ser desfeita.`)){
         return;
     }
 
@@ -255,19 +286,19 @@ async function excluir(id){
 
 async function salvar(){
 
-    const cnpj = document.getElementById("cnpj").value.trim();
+    const clienteId = document.getElementById("cliente_id").value;
     const dataInicial = document.getElementById("data_inicial").value;
     const dataFinal = document.getElementById("data_final").value;
     const valorValor = document.getElementById("valor").value;
     const observacao = document.getElementById("observacao").value;
 
-    if(!cnpj){
-        alert('Preencha o CNPJ.');
+    if(!clienteId){
+        alert('Selecione o cliente.');
         return;
     }
 
     const dados = {
-        cnpj,
+        cliente_id: Number(clienteId),
         data_inicial: dataInicial || null,
         data_final: dataFinal || null,
         valor: valorValor ? Number(valorValor) : null,
@@ -338,4 +369,5 @@ async function salvar(){
 }
 
 checarLogin();
+carregarClientesDisponiveis();
 carregarVeiculosDisponiveis();

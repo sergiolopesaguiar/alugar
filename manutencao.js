@@ -106,6 +106,10 @@ async function carregar(){
 
             <td>${m.responsavel ?? ''}</td>
 
+            <td>${m.data_entrada ? new Date(m.data_entrada + 'T00:00:00').toLocaleDateString('pt-BR') : ''}</td>
+
+            <td>${m.data_saida ? new Date(m.data_saida + 'T00:00:00').toLocaleDateString('pt-BR') : ''}</td>
+
             <td>
                 <button class="btn btn-sm btn-outline-primary" onclick="editar(${m.id})">Editar</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="excluir(${m.id})">Excluir</button>
@@ -141,6 +145,8 @@ async function editar(id){
     document.getElementById("telefone").value = data.telefone ?? '';
     document.getElementById("email").value = data.email ?? '';
     document.getElementById("responsavel").value = data.responsavel ?? '';
+    document.getElementById("data_entrada").value = data.data_entrada ?? '';
+    document.getElementById("data_saida").value = data.data_saida ?? '';
 
     document.getElementById("btnSalvar").textContent = 'Atualizar';
     document.getElementById("btnCancelar").classList.remove('d-none');
@@ -156,6 +162,8 @@ function cancelarEdicao(){
     document.getElementById("telefone").value = '';
     document.getElementById("email").value = '';
     document.getElementById("responsavel").value = '';
+    document.getElementById("data_entrada").value = '';
+    document.getElementById("data_saida").value = '';
 
     document.getElementById("btnSalvar").textContent = 'Salvar';
     document.getElementById("btnCancelar").classList.add('d-none');
@@ -202,6 +210,8 @@ async function salvar(){
     const telefone = document.getElementById("telefone").value.trim();
     const email = document.getElementById("email").value.trim();
     const responsavel = document.getElementById("responsavel").value.trim();
+    const dataEntrada = document.getElementById("data_entrada").value;
+    const dataSaida = document.getElementById("data_saida").value;
 
     if(!veiculoId){
         alert('Selecione o veículo.');
@@ -218,7 +228,9 @@ async function salvar(){
         oficina: oficina || null,
         telefone: telefone || null,
         email: email || null,
-        responsavel: responsavel || null
+        responsavel: responsavel || null,
+        data_entrada: dataEntrada || null,
+        data_saida: dataSaida || null
     };
 
     let error;

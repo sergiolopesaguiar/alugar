@@ -19,7 +19,9 @@ const ROTINAS = [
     {codigo: 'condutor', label: 'Condutor'},
     {codigo: 'contratos', label: 'Contratos'},
     {codigo: 'manutencao', label: 'Manutenção'},
-    {codigo: 'relatorio_veiculos', label: 'Relatórios > Veículos'}
+    {codigo: 'relatorio_inventario_veiculos', label: 'Relatórios > Inventário de Veículos'},
+    {codigo: 'relatorio_veiculos', label: 'Relatórios > Veículos'},
+    {codigo: 'relatorio_faturamento', label: 'Relatórios > Faturamento'}
 ];
 
 async function carregar(){

@@ -4,9 +4,13 @@
 // Página só de leitura (sem criar/editar/excluir). Busca todos os veículos
 // uma vez, com manutenção e contratos vinculados via embedding do
 // PostgREST, guarda em memória (todosOsVeiculos) e os filtros de marca/
-// período de compra são aplicados no próprio navegador (client-side) em
-// cima dessa lista - suficiente para o volume de dados atual e evita ter
+// status/período de compra são aplicados no próprio navegador (client-side)
+// em cima dessa lista - suficiente para o volume de dados atual e evita ter
 // que montar query dinâmica no Supabase.
+//
+// O resumo por marca/modelo (contagem "de estoque") virou uma página
+// separada: Relatórios > Inventário de Veículos. Esta página aqui é só a
+// listagem detalhada, linha a linha, com filtros.
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'relatorio_veiculos';
@@ -17,7 +21,7 @@ async function carregar(){
 
     const {data, error} = await supabaseClient
         .from('veiculos')
-        .select('*, manutencao(oficina, telefone, email, responsavel), contratos_veiculos(contratos(id, cnpj, data_inicial, data_final))')
+        .select('*, manutencao(oficina, telefone, email, responsavel), contratos_veiculos(contratos(id, data_inicial, data_final, clientes(nome, cpf_cnpj)))')
         .order('placa');
 
     if(error){
@@ -60,12 +64,17 @@ function popularFiltroMarca(){
 function aplicarFiltros(){
 
     const marca = document.getElementById('filtroMarca').value;
+    const status = document.getElementById('filtroStatus').value;
     const dataDe = document.getElementById('filtroDataDe').value;
     const dataAte = document.getElementById('filtroDataAte').value;
 
     const filtrados = todosOsVeiculos.filter(v => {
 
         if(marca && v.fabricante !== marca){
+            return false;
+        }
+
+        if(status && v.status !== status){
             return false;
         }
 
@@ -81,7 +90,6 @@ function aplicarFiltros(){
 
     });
 
-    renderizarResumo(filtrados);
     renderizarVeiculos(filtrados);
 
 }
@@ -89,46 +97,11 @@ function aplicarFiltros(){
 function limparFiltros(){
 
     document.getElementById('filtroMarca').value = '';
+    document.getElementById('filtroStatus').value = '';
     document.getElementById('filtroDataDe').value = '';
     document.getElementById('filtroDataAte').value = '';
 
     aplicarFiltros();
-
-}
-
-function renderizarResumo(lista){
-
-    const grupos = {};
-
-    lista.forEach(v => {
-
-        const marca = v.fabricante || '(sem marca)';
-        const modelo = v.modelo || '(sem modelo)';
-        const chave = `${marca}||${modelo}`;
-
-        if(!grupos[chave]){
-            grupos[chave] = {marca, modelo, quantidade: 0};
-        }
-
-        grupos[chave].quantidade++;
-
-    });
-
-    const linhas = Object.values(grupos).sort((a, b) => {
-        return a.marca.localeCompare(b.marca) || a.modelo.localeCompare(b.modelo);
-    });
-
-    let html = '';
-
-    if(linhas.length === 0){
-        html = '<tr><td colspan="3" class="text-muted">Nenhum veículo encontrado com esses filtros.</td></tr>';
-    }
-
-    linhas.forEach(l => {
-        html += `<tr><td>${l.marca}</td><td>${l.modelo}</td><td>${l.quantidade}</td></tr>`;
-    });
-
-    document.getElementById('listaResumo').innerHTML = html;
 
 }
 
@@ -137,7 +110,7 @@ function renderizarVeiculos(lista){
     let html = '';
 
     if(lista.length === 0){
-        html = '<tr><td colspan="14" class="text-muted">Nenhum veículo encontrado com esses filtros.</td></tr>';
+        html = '<tr><td colspan="15" class="text-muted">Nenhum veículo encontrado com esses filtros.</td></tr>';
     }
 
     lista.forEach(v => {
@@ -146,7 +119,7 @@ function renderizarVeiculos(lista){
         const valorCompra = v.valor_compra != null ? Number(v.valor_compra).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}) : '';
 
         const contratos = (v.contratos_veiculos || [])
-            .map(cv => cv.contratos?.cnpj)
+            .map(cv => cv.contratos?.clientes?.cpf_cnpj || cv.contratos?.clientes?.nome)
             .filter(Boolean)
             .join(', ') || '';
 
@@ -160,6 +133,7 @@ function renderizarVeiculos(lista){
             <td>${v.placa}</td>
             <td>${v.fabricante ?? ''}</td>
             <td>${v.modelo ?? ''}</td>
+            <td>${v.status ?? ''}</td>
             <td>${v.cor ?? ''}</td>
             <td>${v.ano ?? ''}</td>
             <td>${v.chassi ?? ''}</td>

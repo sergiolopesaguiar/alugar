@@ -7,7 +7,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Sistema - Condutor</title>
+    <title>Sistema - Relatório de Faturamento</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -82,7 +82,7 @@
                 <a href="index.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
                 <a href="veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="veiculos">Veículos</a>
                 <a href="motorista.html" class="sidebar-link sidebar-sublink" data-rotina="motorista">Motorista</a>
-                <a href="condutor.html" class="sidebar-link sidebar-sublink active" data-rotina="condutor">Condutor</a>
+                <a href="condutor.html" class="sidebar-link sidebar-sublink" data-rotina="condutor">Condutor</a>
                 <a href="contratos.html" class="sidebar-link sidebar-sublink" data-rotina="contratos">Contratos</a>
             </div>
 
@@ -95,7 +95,7 @@
             <div class="collapse show" id="menuRelatorios">
                 <a href="relatorio-inventario-veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_inventario_veiculos">Inventário de Veículos</a>
                 <a href="relatorio-veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_veiculos">Veículos</a>
-                <a href="relatorio-faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_faturamento">Faturamento</a>
+                <a href="relatorio-faturamento.html" class="sidebar-link sidebar-sublink active" data-rotina="relatorio_faturamento">Faturamento</a>
             </div>
 
             <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuAdministracao" role="button" aria-expanded="true" aria-controls="menuAdministracao">
@@ -117,77 +117,101 @@
 
         <div class="card shadow">
 
-            <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2 no-print">
 
-                <h3 class="mb-0 h4">Condutor</h3>
+                <h3 class="mb-0 h4">Relatório de Faturamento</h3>
 
-                <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair</button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-light btn-sm" onclick="window.print()">Imprimir</button>
+                    <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair</button>
+                </div>
 
             </div>
 
             <div class="card-body">
 
-                <div class="row g-2 mb-3">
+                <h3 class="mb-3 d-none d-print-block">Relatório de Faturamento</h3>
 
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <input id="nome" class="form-control" placeholder="Nome">
+                <p class="text-muted small mb-3 no-print">Baseado no valor cadastrado em cada contrato. O mês considerado é o da data inicial do contrato.</p>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-12 col-md-6">
+
+                        <h5 class="mb-2">Por cliente</h5>
+
+                        <div class="table-responsive">
+
+                            <table class="table table-sm table-bordered mb-0">
+
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>CNPJ</th>
+                                        <th>Qtd. contratos</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="listaResumoCliente"></tbody>
+
+                            </table>
+
+                        </div>
+
                     </div>
 
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="telefone" class="form-control" placeholder="Telefone">
-                    </div>
+                    <div class="col-12 col-md-6">
 
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="data_inicio" type="date" class="form-control" placeholder="Data início">
-                    </div>
+                        <h5 class="mb-2">Por mês</h5>
 
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <input id="data_fim" type="date" class="form-control" placeholder="Data fim">
-                    </div>
+                        <div class="table-responsive">
 
-                    <div class="col-12 col-md-3">
-                        <input id="observacao" class="form-control" placeholder="Observação">
+                            <table class="table table-sm table-bordered mb-0">
+
+                                <thead>
+                                    <tr>
+                                        <th>Mês</th>
+                                        <th>Qtd. contratos</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="listaResumoMes"></tbody>
+
+                            </table>
+
+                        </div>
+
                     </div>
 
                 </div>
 
-                <div class="d-flex gap-2 flex-wrap">
-                    <button id="btnSalvar" class="btn btn-success botao-salvar" onclick="salvar()">
-                        Salvar
-                    </button>
-
-                    <button id="btnCancelar" class="btn btn-secondary botao-salvar d-none" onclick="cancelarEdicao()">
-                        Cancelar
-                    </button>
-                </div>
-
-                <hr>
+                <h5 class="mb-2">Contratos</h5>
 
                 <div class="table-responsive">
 
-                    <table class="table table-striped mb-0">
+                    <table class="table table-striped table-sm mb-0">
 
                         <thead>
-
                             <tr>
-
                                 <th>ID</th>
-                                <th>Nome</th>
-                                <th>Telefone</th>
+                                <th>Cliente</th>
+                                <th>CNPJ</th>
                                 <th>Início</th>
                                 <th>Fim</th>
+                                <th>Valor</th>
                                 <th>Observação</th>
-                                <th>Ações</th>
-
                             </tr>
-
                         </thead>
 
-                        <tbody id="lista"></tbody>
+                        <tbody id="listaContratos"></tbody>
 
                     </table>
 
                 </div>
+
+                <p class="text-end fw-bold mt-2 mb-0" id="totalGeral"></p>
 
             </div>
 
@@ -222,7 +246,7 @@
 
 <script src="auth.js"></script>
 
-<script src="condutor.js"></script>
+<script src="relatorio-faturamento.js?v=1"></script>
 
 </body>
 

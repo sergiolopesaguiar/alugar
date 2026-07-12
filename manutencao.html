@@ -93,7 +93,9 @@
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuRelatorios">
+                <a href="relatorio-inventario-veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_inventario_veiculos">Inventário de Veículos</a>
                 <a href="relatorio-veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_veiculos">Veículos</a>
+                <a href="relatorio-faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_faturamento">Faturamento</a>
             </div>
 
             <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuAdministracao" role="button" aria-expanded="true" aria-controls="menuAdministracao">
@@ -149,6 +151,16 @@
                         <input id="responsavel" class="form-control" placeholder="Responsável">
                     </div>
 
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Data entrada</label>
+                        <input id="data_entrada" type="date" class="form-control">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Data saída</label>
+                        <input id="data_saida" type="date" class="form-control">
+                    </div>
+
                 </div>
 
                 <div class="d-flex gap-2 flex-wrap">
@@ -177,6 +189,8 @@
                                 <th>Telefone</th>
                                 <th>Email</th>
                                 <th>Responsável</th>
+                                <th>Entrada</th>
+                                <th>Saída</th>
                                 <th>Ações</th>
 
                             </tr>
@@ -222,7 +236,7 @@
 
 <script src="auth.js"></script>
 
-<script src="manutencao.js"></script>
+<script src="manutencao.js?v=1"></script>
 
 </body>
 
