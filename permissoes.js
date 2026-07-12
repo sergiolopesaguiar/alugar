@@ -1,6 +1,10 @@
 // Lógica da página "Usuário > Rotina" (matriz de permissões).
 // Login, logout e supabaseClient ficam em auth.js (compartilhado).
 //
+// Página restrita a administradores (flag usuarios.is_admin) - ver
+// aplicarRestricaoAdmin() em auth.js.
+const PAGINA_SOMENTE_ADMIN = true;
+//
 // Regra da tabela usuarios_rotinas: a AUSÊNCIA de uma linha para
 // (usuario, rotina) significa liberado. Só existe linha quando alguém já
 // mexeu no padrão por aqui. Por isso hoje, com a tabela vazia, todo mundo
@@ -21,7 +25,11 @@ const ROTINAS = [
     {codigo: 'manutencao', label: 'Manutenção'},
     {codigo: 'relatorio_inventario_veiculos', label: 'Relatórios > Inventário de Veículos'},
     {codigo: 'relatorio_veiculos', label: 'Relatórios > Veículos'},
-    {codigo: 'relatorio_faturamento', label: 'Relatórios > Faturamento'}
+    {codigo: 'relatorio_faturamento', label: 'Relatórios > Faturamento'},
+    {codigo: 'faturamento', label: 'Financeiro > Faturamento'},
+    {codigo: 'fornecedor', label: 'Financeiro > Fornecedor'},
+    {codigo: 'conta_contabil', label: 'Financeiro > Conta Contábil'},
+    {codigo: 'contas_pagar', label: 'Financeiro > Contas a Pagar'}
 ];
 
 async function carregar(){

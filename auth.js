@@ -36,7 +36,9 @@ async function login(){
         return;
     }
 
-    const { data: ok, error } = await supabaseClient.rpc('login_usuario', {
+    // login_usuario retorna uma linha (ok, is_admin) só quando usuário/senha
+    // conferem - nenhuma linha significa credenciais inválidas.
+    const { data, error } = await supabaseClient.rpc('login_usuario', {
         p_usuario: usuario,
         p_senha: senha
     });
@@ -46,7 +48,9 @@ async function login(){
         return;
     }
 
-    if(!ok){
+    const linha = (data || [])[0];
+
+    if(!linha || !linha.ok){
         alert('Usuário ou senha inválidos.');
         return;
     }
@@ -54,6 +58,7 @@ async function login(){
     document.getElementById('loginSenha').value = '';
     localStorage.setItem('logado', 'sim');
     localStorage.setItem('usuarioLogado', usuario);
+    localStorage.setItem('usuarioAdmin', linha.is_admin ? 'sim' : 'nao');
 
     mostrarDashboard();
     aplicarEstadoMenu();
@@ -61,11 +66,13 @@ async function login(){
         carregar();
     }
     aplicarPermissoes();
+    aplicarRestricaoAdmin();
 }
 
 function logout(){
     localStorage.removeItem('logado');
     localStorage.removeItem('usuarioLogado');
+    localStorage.removeItem('usuarioAdmin');
     mostrarLogin();
 }
 
@@ -77,6 +84,7 @@ function checarLogin(){
             carregar();
         }
         aplicarPermissoes();
+        aplicarRestricaoAdmin();
     } else {
         mostrarLogin();
     }
@@ -162,5 +170,38 @@ function bloquearAcessoRotina(){
     const corpo = document.querySelector('#dashboard .card-body');
     if(corpo){
         corpo.innerHTML = '<div class="alert alert-danger mb-0">Você não tem permissão para acessar esta rotina. Fale com um administrador em Usuário &gt; Rotina.</div>';
+    }
+}
+
+// ---------------------------------------------------------------------
+// Restrição de administrador: independente do sistema de permissões por
+// rotina acima (usuarios_rotinas), que é liberado por padrão para todo
+// mundo. Isto aqui é uma trava à parte, fixa, só para as telas de Usuários
+// e Permissões - controlada pela flag usuarios.is_admin, guardada em
+// localStorage no momento do login (não é revalidada a cada página, então
+// uma mudança de is_admin só tem efeito no próximo login do usuário).
+//
+// Páginas administrativas (usuarios.js, permissoes.js) declaram
+// `const PAGINA_SOMENTE_ADMIN = true;`. Links de menu que só devem
+// aparecer para administradores levam o atributo `data-admin-only`.
+// ---------------------------------------------------------------------
+function aplicarRestricaoAdmin(){
+
+    const admin = localStorage.getItem('usuarioAdmin') === 'sim';
+
+    document.querySelectorAll('[data-admin-only]').forEach(el => {
+        el.classList.toggle('d-none', !admin);
+    });
+
+    if(typeof PAGINA_SOMENTE_ADMIN !== 'undefined' && PAGINA_SOMENTE_ADMIN && !admin){
+        bloquearAcessoAdmin();
+    }
+
+}
+
+function bloquearAcessoAdmin(){
+    const corpo = document.querySelector('#dashboard .card-body');
+    if(corpo){
+        corpo.innerHTML = '<div class="alert alert-danger mb-0">Esta área é restrita a administradores.</div>';
     }
 }

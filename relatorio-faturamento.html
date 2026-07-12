@@ -98,13 +98,24 @@
                 <a href="relatorio-faturamento.html" class="sidebar-link sidebar-sublink active" data-rotina="relatorio_faturamento">Faturamento</a>
             </div>
 
+            <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuFinanceiro" role="button" aria-expanded="true" aria-controls="menuFinanceiro">
+                <span>Financeiro</span>
+                <span class="menu-caret">&#9662;</span>
+            </a>
+            <div class="collapse show" id="menuFinanceiro">
+                <a href="faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="faturamento">Faturamento</a>
+                <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
+                <a href="conta-contabil.html" class="sidebar-link sidebar-sublink" data-rotina="conta_contabil">Conta Contábil</a>
+                <a href="contas-pagar.html" class="sidebar-link sidebar-sublink" data-rotina="contas_pagar">Contas a Pagar</a>
+            </div>
+
             <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuAdministracao" role="button" aria-expanded="true" aria-controls="menuAdministracao">
                 <span>Administração</span>
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuAdministracao">
-                <a href="usuarios.html" class="sidebar-link sidebar-sublink">Usuários</a>
-                <a href="permissoes.html" class="sidebar-link sidebar-sublink">Permissões</a>
+                <a href="usuarios.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Usuários</a>
+                <a href="permissoes.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Permissões</a>
             </div>
 
         </div>
@@ -133,6 +144,20 @@
                 <h3 class="mb-3 d-none d-print-block">Relatório de Faturamento</h3>
 
                 <p class="text-muted small mb-3 no-print">Baseado no valor cadastrado em cada contrato. O mês considerado é o da data inicial do contrato.</p>
+
+                <div class="row g-2 mb-3 no-print">
+
+                    <div class="col-12 col-md-4">
+                        <select id="filtroCliente" class="form-select" onchange="aplicarFiltros()">
+                            <option value="">Todos os clientes</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-2">
+                        <button type="button" class="btn btn-secondary w-100" onclick="limparFiltros()">Limpar filtro</button>
+                    </div>
+
+                </div>
 
                 <div class="row g-3 mb-4">
 
@@ -244,9 +269,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="auth.js"></script>
+<script src="auth.js?v=2"></script>
 
-<script src="relatorio-faturamento.js?v=1"></script>
+<script src="relatorio-faturamento.js?v=2"></script>
 
 </body>
 

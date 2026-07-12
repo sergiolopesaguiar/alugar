@@ -10,6 +10,8 @@
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'relatorio_faturamento';
 
+let todosContratos = []; // carregado uma vez; o filtro de cliente é aplicado em memória
+
 async function carregar(){
 
     const {data, error} = await supabaseClient
@@ -22,12 +24,56 @@ async function carregar(){
         return;
     }
 
-    const contratos = data || [];
+    todosContratos = data || [];
 
-    renderizarResumoCliente(contratos);
-    renderizarResumoMes(contratos);
-    renderizarContratos(contratos);
+    popularFiltroCliente();
+    aplicarFiltros();
 
+}
+
+// Preenche o combo de clientes só com quem já tem pelo menos 1 contrato -
+// evita listar clientes sem nenhum faturamento associado.
+function popularFiltroCliente(){
+
+    const select = document.getElementById('filtroCliente');
+    const valorAtual = select.value;
+
+    const clientes = new Map();
+    todosContratos.forEach(c => {
+        if(c.cliente_id != null){
+            clientes.set(c.cliente_id, c.clientes?.nome || `Cliente #${c.cliente_id}`);
+        }
+    });
+
+    const ordenados = Array.from(clientes.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+
+    let html = '<option value="">Todos os clientes</option>';
+    ordenados.forEach(([id, nome]) => {
+        html += `<option value="${id}">${nome}</option>`;
+    });
+
+    select.innerHTML = html;
+    select.value = valorAtual;
+
+}
+
+function aplicarFiltros(){
+
+    const clienteId = document.getElementById('filtroCliente').value;
+
+    const filtrados = clienteId
+        ? todosContratos.filter(c => String(c.cliente_id) === clienteId)
+        : todosContratos;
+
+    renderizarResumoCliente(filtrados);
+    renderizarResumoMes(filtrados);
+    renderizarContratos(filtrados);
+
+}
+
+function limparFiltros(){
+    document.getElementById('filtroCliente').value = '';
+    aplicarFiltros();
 }
 
 function formatarMoeda(valor){

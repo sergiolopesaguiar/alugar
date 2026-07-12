@@ -100,13 +100,24 @@
                 <a href="relatorio-faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_faturamento">Faturamento</a>
             </div>
 
+            <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuFinanceiro" role="button" aria-expanded="true" aria-controls="menuFinanceiro">
+                <span>Financeiro</span>
+                <span class="menu-caret">&#9662;</span>
+            </a>
+            <div class="collapse show" id="menuFinanceiro">
+                <a href="faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="faturamento">Faturamento</a>
+                <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
+                <a href="conta-contabil.html" class="sidebar-link sidebar-sublink" data-rotina="conta_contabil">Conta Contábil</a>
+                <a href="contas-pagar.html" class="sidebar-link sidebar-sublink" data-rotina="contas_pagar">Contas a Pagar</a>
+            </div>
+
             <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuAdministracao" role="button" aria-expanded="true" aria-controls="menuAdministracao">
                 <span>Administração</span>
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuAdministracao">
-                <a href="usuarios.html" class="sidebar-link sidebar-sublink">Usuários</a>
-                <a href="permissoes.html" class="sidebar-link sidebar-sublink">Permissões</a>
+                <a href="usuarios.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Usuários</a>
+                <a href="permissoes.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Permissões</a>
             </div>
 
         </div>
@@ -222,7 +233,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="auth.js"></script>
+<script src="auth.js?v=2"></script>
 
 <script src="condutor.js?v=1"></script>
 

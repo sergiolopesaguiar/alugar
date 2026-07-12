@@ -7,9 +7,11 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Sistema - Permissões</title>
+    <title>Sistema - Faturamento</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
 
@@ -103,7 +105,7 @@
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuFinanceiro">
-                <a href="faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="faturamento">Faturamento</a>
+                <a href="faturamento.html" class="sidebar-link sidebar-sublink active" data-rotina="faturamento">Faturamento</a>
                 <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
                 <a href="conta-contabil.html" class="sidebar-link sidebar-sublink" data-rotina="conta_contabil">Conta Contábil</a>
                 <a href="contas-pagar.html" class="sidebar-link sidebar-sublink" data-rotina="contas_pagar">Contas a Pagar</a>
@@ -115,7 +117,7 @@
             </a>
             <div class="collapse show" id="menuAdministracao">
                 <a href="usuarios.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Usuários</a>
-                <a href="permissoes.html" class="sidebar-link sidebar-sublink active" data-admin-only="sim">Permissões</a>
+                <a href="permissoes.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Permissões</a>
             </div>
 
         </div>
@@ -130,7 +132,7 @@
 
             <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
 
-                <h3 class="mb-0 h4">Usuário &gt; Rotina</h3>
+                <h3 class="mb-0 h4">Financeiro &gt; Faturamento</h3>
 
                 <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair</button>
 
@@ -138,36 +140,69 @@
 
             <div class="card-body">
 
-                <p class="text-muted mb-3">Escolha um usuário e marque quais rotinas do sistema ele pode acessar. Por padrão, um usuário novo tem acesso liberado a todas as rotinas.</p>
-
                 <div class="row g-2 mb-3">
 
-                    <div class="col-12 col-md-4">
-                        <select id="usuarioSelecionado" class="form-select" onchange="carregarPermissoesDoUsuario()">
-                            <option value="" selected disabled>Selecione o usuário</option>
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Data</label>
+                        <input id="data" type="date" class="form-control">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Competência</label>
+                        <input id="comp" type="month" class="form-control">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-5">
+                        <label class="form-label mb-0 small text-muted">Contrato</label>
+                        <select id="contratoId" class="form-select">
+                            <option value="" selected disabled>Selecione o contrato...</option>
                         </select>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0 small text-muted">Valor</label>
+                        <input id="valor" type="number" step="0.01" class="form-control" placeholder="Valor">
                     </div>
 
                 </div>
 
-                <div id="listaPermissoes" class="d-none">
+                <div class="d-flex gap-2 flex-wrap">
+                    <button id="btnSalvar" class="btn btn-success botao-salvar" onclick="salvar()">
+                        Salvar
+                    </button>
+
+                    <button id="btnCancelar" class="btn btn-secondary botao-salvar d-none" onclick="cancelarEdicao()">
+                        Cancelar
+                    </button>
+                </div>
+
+                <hr>
+
+                <div class="table-responsive">
 
                     <table class="table table-striped mb-0">
 
                         <thead>
+
                             <tr>
-                                <th>Rotina</th>
-                                <th>Acesso liberado</th>
+
+                                <th>ID</th>
+                                <th>Data</th>
+                                <th>Comp.</th>
+                                <th>Contrato</th>
+                                <th>Cliente</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+
                             </tr>
+
                         </thead>
 
-                        <tbody id="corpoPermissoes"></tbody>
+                        <tbody id="lista"></tbody>
 
                     </table>
 
                 </div>
-
-                <p id="mensagemSemUsuario" class="text-muted">Selecione um usuário acima para ver e ajustar as permissões dele.</p>
 
             </div>
 
@@ -180,9 +215,6 @@
 </div>
 
 <script>
-// Decide login/dashboard IMEDIATAMENTE, sem esperar os scripts externos
-// (Supabase/Bootstrap) carregarem da CDN - evita o "flash" do formulário
-// de login ao trocar de aba/página. Ver index.html para o comentário completo.
 (function(){
     var logado = localStorage.getItem('logado') === 'sim';
     document.getElementById('loginBox').classList.toggle('d-none', logado);
@@ -202,7 +234,7 @@
 
 <script src="auth.js?v=2"></script>
 
-<script src="permissoes.js?v=2"></script>
+<script src="faturamento.js?v=1"></script>
 
 </body>
 
