@@ -5,44 +5,83 @@
 // campo único "veiculo" na tabela contratos - em vez disso, a tabela
 // contratos_veiculos guarda a relação N-N (contrato_id, veiculo_id). Ao
 // salvar, sempre apagamos e recriamos as linhas de contratos_veiculos do
-// contrato atual a partir dos checkboxes marcados - é a forma mais simples
-// de manter a lista de veículos em dia tanto na criação quanto na edição.
+// contrato atual a partir da lista de veículos adicionados - é a forma mais
+// simples de manter a lista em dia tanto na criação quanto na edição.
+//
+// Seleção dos veículos: um combobox (select) + botão "Adicionar", em vez de
+// checkboxes - com muitos veículos cadastrados, uma lista de checkbox longa
+// fica ruim de usar. Cada veículo adicionado aparece como uma linha com um
+// botão de remover, e some do combobox pra não deixar adicionar duplicado.
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'contratos';
 
 let editandoId = null;
+let todosVeiculos = []; // {id, placa, modelo} - carregado uma vez
+let veiculosDoContrato = []; // ids dos veículos já adicionados ao contrato em edição/criação
 
-async function carregarVeiculosDisponiveis(veiculosMarcados){
-
-    const marcados = veiculosMarcados || [];
+async function carregarVeiculosDisponiveis(){
 
     const {data, error} = await supabaseClient
         .from('veiculos')
         .select('id, placa, modelo')
         .order('placa');
 
-    const container = document.getElementById('listaVeiculosContrato');
-
     if(error){
-        container.innerHTML = `<p class="text-danger mb-0">Erro ao carregar veículos: ${error.message}</p>`;
+        document.getElementById('comboVeiculos').innerHTML = `<option value="" selected disabled>Erro ao carregar veículos</option>`;
         return;
     }
 
-    if(!data || data.length === 0){
-        container.innerHTML = '<p class="text-muted mb-0">Nenhum veículo cadastrado ainda.</p>';
+    todosVeiculos = data || [];
+
+    atualizarComboVeiculos();
+    renderizarVeiculosDoContrato();
+
+}
+
+function descricaoVeiculo(v){
+    return v.modelo ? `${v.placa} - ${v.modelo}` : v.placa;
+}
+
+function atualizarComboVeiculos(){
+
+    const combo = document.getElementById('comboVeiculos');
+
+    const disponiveis = todosVeiculos.filter(v => !veiculosDoContrato.includes(v.id));
+
+    if(disponiveis.length === 0){
+        combo.innerHTML = '<option value="" selected disabled>Nenhum veículo disponível</option>';
+        return;
+    }
+
+    let html = '<option value="" selected disabled>Selecione um veículo...</option>';
+
+    disponiveis.forEach(v => {
+        html += `<option value="${v.id}">${descricaoVeiculo(v)}</option>`;
+    });
+
+    combo.innerHTML = html;
+
+}
+
+function renderizarVeiculosDoContrato(){
+
+    const container = document.getElementById('listaVeiculosContrato');
+
+    if(veiculosDoContrato.length === 0){
+        container.innerHTML = '<p class="text-muted mb-0" id="mensagemSemVeiculos">Nenhum veículo adicionado ainda.</p>';
         return;
     }
 
     let html = '';
 
-    data.forEach(v => {
-        const marcado = marcados.includes(v.id) ? 'checked' : '';
-        const descricao = v.modelo ? `${v.placa} - ${v.modelo}` : v.placa;
+    veiculosDoContrato.forEach(id => {
+        const v = todosVeiculos.find(item => item.id === id);
+        const descricao = v ? descricaoVeiculo(v) : `#${id}`;
         html += `
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="${v.id}" id="veiculo_${v.id}" ${marcado}>
-            <label class="form-check-label" for="veiculo_${v.id}">${descricao}</label>
+        <div class="d-flex justify-content-between align-items-center py-1">
+            <span>${descricao}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerVeiculoDoContrato(${id})">Remover</button>
         </div>
         `;
     });
@@ -51,10 +90,36 @@ async function carregarVeiculosDisponiveis(veiculosMarcados){
 
 }
 
+function adicionarVeiculoAoContrato(){
+
+    const combo = document.getElementById('comboVeiculos');
+    const id = Number(combo.value);
+
+    if(!id){
+        return;
+    }
+
+    if(!veiculosDoContrato.includes(id)){
+        veiculosDoContrato.push(id);
+    }
+
+    atualizarComboVeiculos();
+    renderizarVeiculosDoContrato();
+
+}
+
+function removerVeiculoDoContrato(id){
+
+    veiculosDoContrato = veiculosDoContrato.filter(item => item !== id);
+
+    atualizarComboVeiculos();
+    renderizarVeiculosDoContrato();
+
+}
+
 function veiculosSelecionados(){
 
-    return Array.from(document.querySelectorAll('#listaVeiculosContrato input[type="checkbox"]:checked'))
-        .map(el => Number(el.value));
+    return veiculosDoContrato;
 
 }
 
@@ -125,9 +190,10 @@ async function editar(id){
     document.getElementById("valor").value = data.valor ?? '';
     document.getElementById("observacao").value = data.observacao ?? '';
 
-    const veiculoIds = (data.contratos_veiculos || []).map(cv => cv.veiculo_id);
+    veiculosDoContrato = (data.contratos_veiculos || []).map(cv => cv.veiculo_id);
 
-    await carregarVeiculosDisponiveis(veiculoIds);
+    atualizarComboVeiculos();
+    renderizarVeiculosDoContrato();
 
     document.getElementById("btnSalvar").textContent = 'Atualizar';
     document.getElementById("btnCancelar").classList.remove('d-none');
@@ -144,7 +210,10 @@ async function cancelarEdicao(){
     document.getElementById("valor").value = '';
     document.getElementById("observacao").value = '';
 
-    await carregarVeiculosDisponiveis([]);
+    veiculosDoContrato = [];
+
+    atualizarComboVeiculos();
+    renderizarVeiculosDoContrato();
 
     document.getElementById("btnSalvar").textContent = 'Salvar';
     document.getElementById("btnCancelar").classList.add('d-none');
@@ -233,7 +302,7 @@ async function salvar(){
         return;
     }
 
-    // Recria a lista de veículos vinculados a partir dos checkboxes marcados.
+    // Recria a lista de veículos vinculados a partir dos veículos adicionados na tela.
     const idsSelecionados = veiculosSelecionados();
 
     const {error: erroLimpeza} = await supabaseClient
@@ -269,4 +338,4 @@ async function salvar(){
 }
 
 checarLogin();
-carregarVeiculosDisponiveis([]);
+carregarVeiculosDisponiveis();

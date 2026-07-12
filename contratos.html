@@ -145,8 +145,20 @@
 
                     <label class="form-label mb-1">Veículos deste contrato</label>
 
+                    <div class="d-flex gap-2 mb-2">
+
+                        <select id="comboVeiculos" class="form-select">
+                            <option value="" selected disabled>Carregando veículos...</option>
+                        </select>
+
+                        <button type="button" class="btn btn-outline-primary text-nowrap" onclick="adicionarVeiculoAoContrato()">
+                            Adicionar
+                        </button>
+
+                    </div>
+
                     <div id="listaVeiculosContrato" class="border rounded p-2" style="max-height:180px; overflow-y:auto;">
-                        <p class="text-muted mb-0">Carregando veículos...</p>
+                        <p class="text-muted mb-0" id="mensagemSemVeiculos">Nenhum veículo adicionado ainda.</p>
                     </div>
 
                 </div>
