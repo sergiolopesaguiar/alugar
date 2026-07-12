@@ -163,3 +163,25 @@ table{
     }
 
 }
+
+/* Impressão de relatórios: esconde sidebar, filtros e botões, deixando só
+   o conteúdo do relatório (título + tabelas). Elementos que não devem
+   aparecer na versão impressa usam a classe "no-print". */
+
+@media print{
+
+    .sidebar, .sidebar-expand-btn, .no-print, nav.navbar{
+        display:none!important;
+    }
+
+    #dashboard, .flex-grow-1{
+        padding:0!important;
+        margin:0!important;
+    }
+
+    .card{
+        box-shadow:none!important;
+        border-radius:0!important;
+    }
+
+}

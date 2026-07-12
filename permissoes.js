@@ -18,7 +18,8 @@ const ROTINAS = [
     {codigo: 'motorista', label: 'Motorista'},
     {codigo: 'condutor', label: 'Condutor'},
     {codigo: 'contratos', label: 'Contratos'},
-    {codigo: 'manutencao', label: 'Manutenção'}
+    {codigo: 'manutencao', label: 'Manutenção'},
+    {codigo: 'relatorio_veiculos', label: 'Relatórios > Veículos'}
 ];
 
 async function carregar(){
