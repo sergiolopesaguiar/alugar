@@ -16,6 +16,8 @@ const ROTINAS = [
     {codigo: 'clientes', label: 'Clientes'},
     {codigo: 'veiculos', label: 'Veículos'},
     {codigo: 'motorista', label: 'Motorista'},
+    {codigo: 'condutor', label: 'Condutor'},
+    {codigo: 'contratos', label: 'Contratos'},
     {codigo: 'manutencao', label: 'Manutenção'}
 ];
 

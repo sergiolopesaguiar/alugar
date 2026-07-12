@@ -87,6 +87,13 @@ async function editar(id){
     document.getElementById("modelo").value = data.modelo ?? '';
     document.getElementById("cor").value = data.cor ?? '';
     document.getElementById("ano").value = data.ano ?? '';
+    document.getElementById("chassi").value = data.chassi ?? '';
+    document.getElementById("renavam").value = data.renavam ?? '';
+    document.getElementById("km_compra").value = data.km_compra ?? '';
+    document.getElementById("valor_compra").value = data.valor_compra ?? '';
+    document.getElementById("data_compra").value = data.data_compra ?? '';
+    document.getElementById("origem_compra").value = data.origem_compra ?? '';
+    document.getElementById("observacao").value = data.observacao ?? '';
 
     document.getElementById("btnSalvar").textContent = 'Atualizar';
     document.getElementById("btnCancelar").classList.remove('d-none');
@@ -102,6 +109,13 @@ function cancelarEdicao(){
     document.getElementById("modelo").value='';
     document.getElementById("cor").value='';
     document.getElementById("ano").value='';
+    document.getElementById("chassi").value='';
+    document.getElementById("renavam").value='';
+    document.getElementById("km_compra").value='';
+    document.getElementById("valor_compra").value='';
+    document.getElementById("data_compra").value='';
+    document.getElementById("origem_compra").value='';
+    document.getElementById("observacao").value='';
 
     document.getElementById("btnSalvar").textContent = 'Salvar';
     document.getElementById("btnCancelar").classList.add('d-none');
@@ -152,6 +166,14 @@ async function salvar(){
 
     const anoValor=document.getElementById("ano").value;
 
+    const chassi=document.getElementById("chassi").value;
+    const renavam=document.getElementById("renavam").value;
+    const kmCompraValor=document.getElementById("km_compra").value;
+    const valorCompraValor=document.getElementById("valor_compra").value;
+    const dataCompra=document.getElementById("data_compra").value;
+    const origemCompra=document.getElementById("origem_compra").value;
+    const observacao=document.getElementById("observacao").value;
+
     if(!placa){
         alert('Preencha a placa.');
         return;
@@ -167,7 +189,21 @@ async function salvar(){
 
         cor,
 
-        ano: anoValor ? Number(anoValor) : null
+        ano: anoValor ? Number(anoValor) : null,
+
+        chassi: chassi || null,
+
+        renavam: renavam || null,
+
+        km_compra: kmCompraValor ? Number(kmCompraValor) : null,
+
+        valor_compra: valorCompraValor ? Number(valorCompraValor) : null,
+
+        data_compra: dataCompra || null,
+
+        origem_compra: origemCompra || null,
+
+        observacao: observacao || null
 
     };
 
