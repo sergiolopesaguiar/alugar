@@ -221,6 +221,7 @@
                                 <th>Data</th>
                                 <th>Valor total</th>
                                 <th>Valor parcela</th>
+                                <th>Parcela</th>
                                 <th>Vencimento</th>
                                 <th>Status</th>
                                 <th>Ações</th>
@@ -243,6 +244,47 @@
 
     </div>
 
+</div>
+
+<div class="modal fade" id="modalParcelamento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModalParcelamento">Confirmar geração de parcelas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <p class="text-muted">O valor total é maior que o valor da parcela informado. O saldo será distribuído mensalmente, uma parcela por mês, a partir do vencimento informado. Confira abaixo antes de confirmar.</p>
+
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Parcela</th>
+                            <th>Vencimento</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoPreviaParcelas"></tbody>
+                    <tfoot>
+                        <tr class="fw-semibold">
+                            <td colspan="2">Total</td>
+                            <td id="totalPreviaParcelas"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="confirmarParcelamento()">Confirmar e gerar parcelas</button>
+            </div>
+
+        </div>
+    </div>
 </div>
 
 <div id="statusBar" class="status-bar d-none no-print">
@@ -269,7 +311,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="contas-pagar.js?v=1"></script>
+<script src="contas-pagar.js?v=2"></script>
 
 </body>
 

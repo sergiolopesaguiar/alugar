@@ -61,6 +61,109 @@ function formatarMoeda(valor){
     return valor != null ? Number(valor).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}) : '';
 }
 
+function formatarDataBR(dataStr){
+    return dataStr ? new Date(dataStr + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+}
+
+// Soma N meses a uma data 'YYYY-MM-DD', preservando o dia quando possível e
+// ajustando (clamp) para o último dia do mês de destino quando o mês de
+// destino tem menos dias (ex: 31/01 + 1 mês -> 28/02 ou 29/02, nunca 03/03).
+function addMonths(dataStr, n){
+    const [y, m, d] = dataStr.split('-').map(Number);
+    const totalMeses = (m - 1) + n;
+    const anoAlvo = y + Math.floor(totalMeses / 12);
+    const mesAlvo = ((totalMeses % 12) + 12) % 12; // 0-indexado
+    const ultimoDiaDoMes = new Date(anoAlvo, mesAlvo + 1, 0).getDate();
+    const diaAlvo = Math.min(d, ultimoDiaDoMes);
+    const mm = String(mesAlvo + 1).padStart(2, '0');
+    const dd = String(diaAlvo).padStart(2, '0');
+    return `${anoAlvo}-${mm}-${dd}`;
+}
+
+// Distribui o valor_total em parcelas mensais de valor_parcela, com a
+// última parcela cobrindo o resto (ex: 22.000 / 4.000 -> 5 parcelas de
+// 4.000 + 1 de 2.000). Se a divisão for exata, todas as parcelas ficam
+// com o mesmo valor (ex: 40.000 / 4.000 -> 10 parcelas de 4.000).
+function calcularParcelas(valorTotal, valorParcela, vencimentoBase){
+    const qtdCheia = Math.floor(valorTotal / valorParcela);
+    const resto = Math.round((valorTotal - qtdCheia * valorParcela) * 100) / 100;
+    const parcelas = [];
+    for(let i = 0; i < qtdCheia; i++){
+        parcelas.push({numero: i + 1, valor: valorParcela, vencimento: addMonths(vencimentoBase, i)});
+    }
+    if(resto > 0.009){
+        parcelas.push({numero: qtdCheia + 1, valor: resto, vencimento: addMonths(vencimentoBase, qtdCheia)});
+    }
+    return parcelas;
+}
+
+// Guarda o estado entre abrir a prévia (abrirPreviaParcelamento) e confirmar
+// a geração das linhas (confirmarParcelamento) - o usuário vê a tabela e
+// decide aprovar ou cancelar antes de qualquer insert acontecer.
+let parcelasPendentes = null;
+let dadosComunsPendentes = null;
+
+function abrirPreviaParcelamento(dadosComuns, parcelas){
+
+    parcelasPendentes = parcelas;
+    dadosComunsPendentes = dadosComuns;
+
+    let html = '';
+    parcelas.forEach(p => {
+        html += `<tr><td>${p.numero}/${parcelas.length}</td><td>${formatarDataBR(p.vencimento)}</td><td>${formatarMoeda(p.valor)}</td></tr>`;
+    });
+    document.getElementById('corpoPreviaParcelas').innerHTML = html;
+
+    const total = parcelas.reduce((soma, p) => soma + p.valor, 0);
+    document.getElementById('totalPreviaParcelas').textContent = formatarMoeda(total);
+    document.getElementById('tituloModalParcelamento').textContent = `Confirmar geração de ${parcelas.length} parcelas`;
+
+    const modal = new bootstrap.Modal(document.getElementById('modalParcelamento'));
+    modal.show();
+
+}
+
+async function confirmarParcelamento(){
+
+    if(!parcelasPendentes || !dadosComunsPendentes){
+        return;
+    }
+
+    const grupo = crypto.randomUUID();
+
+    const linhas = parcelasPendentes.map(p => ({
+        fornecedor_id: dadosComunsPendentes.fornecedorId,
+        conta_id: dadosComunsPendentes.contaId,
+        status: dadosComunsPendentes.status,
+        data: dadosComunsPendentes.data,
+        valor_total: dadosComunsPendentes.valorTotal,
+        valor_parcela: p.valor,
+        data_vencimento: p.vencimento,
+        grupo_parcelamento: grupo,
+        numero_parcela: p.numero,
+        total_parcelas: parcelasPendentes.length
+    }));
+
+    const {error} = await supabaseClient
+        .from('contas_pagar')
+        .insert(linhas);
+
+    if(error){
+        alert('Erro ao gerar as parcelas: ' + error.message);
+        return;
+    }
+
+    const modalEl = document.getElementById('modalParcelamento');
+    bootstrap.Modal.getInstance(modalEl)?.hide();
+
+    parcelasPendentes = null;
+    dadosComunsPendentes = null;
+
+    cancelarEdicao();
+    carregar();
+
+}
+
 async function carregar(){
 
     const {data, error} = await supabaseClient
@@ -80,6 +183,7 @@ async function carregar(){
         const dataFmt = c.data ? new Date(c.data + 'T00:00:00').toLocaleDateString('pt-BR') : '';
         const vencimentoFmt = c.data_vencimento ? new Date(c.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') : '';
         const corStatus = c.status === 'Pago' ? 'text-success' : 'text-danger';
+        const parcelaFmt = c.total_parcelas ? `${c.numero_parcela}/${c.total_parcelas}` : '';
 
         html += `
         <tr>
@@ -89,6 +193,7 @@ async function carregar(){
             <td>${dataFmt}</td>
             <td>${formatarMoeda(c.valor_total)}</td>
             <td>${formatarMoeda(c.valor_parcela)}</td>
+            <td>${parcelaFmt}</td>
             <td>${vencimentoFmt}</td>
             <td class="${corStatus} fw-semibold">${c.status}</td>
             <td>
@@ -196,6 +301,35 @@ async function salvar(){
     if(!fornecedorId){
         alert('Selecione o fornecedor.');
         return;
+    }
+
+    // Parcelamento automático: só dispara para lançamento novo (não em
+    // edição de uma parcela já existente - ver AskUserQuestion respondida
+    // por Sérgio) e quando o valor total informado é maior que o valor da
+    // parcela. Em vez de salvar direto, mostra a prévia das parcelas para
+    // aprovação antes de gravar qualquer coisa no banco.
+    const valorTotalNum = valorTotal ? Number(valorTotal) : 0;
+    const valorParcelaNum = valorParcela ? Number(valorParcela) : 0;
+
+    if(!editandoId && valorTotalNum > 0 && valorParcelaNum > 0 && valorTotalNum > valorParcelaNum + 0.009){
+
+        if(!dataVencimento){
+            alert('Informe o vencimento da primeira parcela para gerar o parcelamento.');
+            return;
+        }
+
+        const parcelas = calcularParcelas(valorTotalNum, valorParcelaNum, dataVencimento);
+
+        abrirPreviaParcelamento({
+            fornecedorId: Number(fornecedorId),
+            contaId: contaId ? Number(contaId) : null,
+            status: status || 'Pendente',
+            data: dataValor || null,
+            valorTotal: valorTotalNum
+        }, parcelas);
+
+        return;
+
     }
 
     const dados = {
