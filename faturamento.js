@@ -86,7 +86,7 @@ async function carregar(){
         <tr>
             <td>${f.id}</td>
             <td>${dataFmt}</td>
-            <td>${f.contrato_id ? '#' + f.contrato_id : ''}</td>
+            <td>${f.id_contrato ? '#' + f.id_contrato : ''}</td>
             <td>${cliente}</td>
             <td>${valor}</td>
             <td>
@@ -120,7 +120,7 @@ async function editar(id){
     editandoId = id;
 
     document.getElementById("data").value = data.data ?? '';
-    document.getElementById("contratoId").value = data.contrato_id ?? '';
+    document.getElementById("contratoId").value = data.id_contrato ?? '';
     document.getElementById("valor").value = data.valor ?? '';
 
     document.getElementById("btnSalvar").textContent = 'Atualizar';
@@ -187,7 +187,7 @@ async function salvar(){
 
     const dados = {
         data: dataValor || null,
-        contrato_id: Number(contratoId),
+        id_contrato: Number(contratoId),
         valor: valorValor ? Number(valorValor) : null
     };
 
@@ -285,7 +285,7 @@ async function gerarFaturamentoMes(){
 
     const linhas = contratos.map(c => ({
         data: dataLancamento,
-        contrato_id: c.id,
+        id_contrato: c.id,
         valor: c.valor ?? null
     }));
 
