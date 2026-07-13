@@ -12,7 +12,17 @@ body{
 
 table{
 
-    font-size:14px;
+    font-size:13px;
+
+}
+
+/* Labels dos campos de formulário nas telas de cadastro - fonte um pouco
+   menor que o padrão "small" do Bootstrap (~14px), pedido do Sérgio depois
+   de aprovar o padrão em Clientes. Um único ponto central em vez de trocar
+   a classe em cada campo de cada página. */
+.card-body .form-label{
+
+    font-size:.72rem;
 
 }
 

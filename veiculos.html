@@ -13,7 +13,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?v=1">
+    <link rel="stylesheet" href="style.css?v=2">
 
 </head>
 
@@ -148,10 +148,12 @@
                 <div class="row g-2 mb-3">
 
                     <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0">Placa</label>
                         <input id="placa" class="form-control" placeholder="Placa">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0">Marca</label>
                         <select id="fabricante" class="form-select">
                             <option value="" selected disabled>Marca</option>
                             <option>FIAT</option>
@@ -164,14 +166,17 @@
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0">Modelo</label>
                         <input id="modelo" class="form-control" placeholder="Modelo">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0">Cor</label>
                         <input id="cor" class="form-control" placeholder="Cor">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-1">
+                        <label class="form-label mb-0">Ano</label>
                         <input id="ano" type="number" class="form-control" placeholder="Ano">
                     </div>
 
@@ -179,23 +184,33 @@
 
                 <div class="row g-2 mb-3">
 
-                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0">Chassi</label>
                         <input id="chassi" class="form-control" placeholder="Chassi">
                     </div>
 
-                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0">Renavam</label>
                         <input id="renavam" class="form-control" placeholder="Renavam">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0">Cód. FIPE</label>
+                        <input id="cod_fipe" class="form-control" placeholder="Cód. FIPE" title="Código FIPE do veículo (Tabela FIPE)">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0">KM na compra</label>
                         <input id="km_compra" type="number" class="form-control" placeholder="KM na compra">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0">Valor da compra</label>
                         <input id="valor_compra" type="number" step="0.01" class="form-control" placeholder="Valor da compra">
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0">Data da compra</label>
                         <input id="data_compra" type="date" class="form-control" placeholder="Data da compra">
                     </div>
 
@@ -204,18 +219,35 @@
                 <div class="row g-2 mb-3">
 
                     <div class="col-12 col-md-3">
+                        <label class="form-label mb-0">Origem da compra</label>
                         <input id="origem_compra" class="form-control" placeholder="Origem da compra">
                     </div>
 
                     <div class="col-12 col-md-7">
+                        <label class="form-label mb-0">Observação</label>
                         <input id="observacao" class="form-control" placeholder="Observação">
                     </div>
 
                     <div class="col-12 col-md-2">
-                        <select id="status" class="form-select">
+                        <label class="form-label mb-0">Status</label>
+                        <select id="status" class="form-select" onchange="alternarCamposVenda()">
                             <option value="Ativo">Ativo</option>
                             <option value="Vendido">Vendido</option>
                         </select>
+                    </div>
+
+                </div>
+
+                <div class="row g-2 mb-3 d-none border rounded py-2 mx-0" id="camposVenda">
+
+                    <div class="col-12 col-sm-6 col-md-4">
+                        <label class="form-label mb-0">Comprador</label>
+                        <input id="comprador" class="form-control" placeholder="Comprador" title="Nome de quem comprou o veículo">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0">Data da venda</label>
+                        <input id="data_venda" type="date" class="form-control" title="Data em que o veículo foi vendido">
                     </div>
 
                 </div>
@@ -296,7 +328,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="veiculos.js?v=2"></script>
+<script src="veiculos.js?v=3"></script>
 
 </body>
 

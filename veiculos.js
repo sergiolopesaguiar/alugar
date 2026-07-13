@@ -14,6 +14,25 @@ const ROTINA_ATUAL = 'veiculos';
 
 let editandoId = null;
 
+// Comprador/Data da venda só fazem sentido para um veículo Vendido - o
+// bloco fica escondido por padrão e só aparece quando o Status selecionado
+// é "Vendido". Ao sair de "Vendido" para "Ativo", limpa os dois campos para
+// não deixar um comprador/data órfãos salvos junto de um veículo ativo.
+function alternarCamposVenda(){
+
+    const status = document.getElementById('status').value;
+    const bloco = document.getElementById('camposVenda');
+
+    if(status === 'Vendido'){
+        bloco.classList.remove('d-none');
+    } else {
+        bloco.classList.add('d-none');
+        document.getElementById('comprador').value = '';
+        document.getElementById('data_venda').value = '';
+    }
+
+}
+
 async function carregar(){
 
     const {data,error}=await supabaseClient
@@ -93,12 +112,17 @@ async function editar(id){
     document.getElementById("ano").value = data.ano ?? '';
     document.getElementById("chassi").value = data.chassi ?? '';
     document.getElementById("renavam").value = data.renavam ?? '';
+    document.getElementById("cod_fipe").value = data.cod_fipe ?? '';
     document.getElementById("km_compra").value = data.km_compra ?? '';
     document.getElementById("valor_compra").value = data.valor_compra ?? '';
     document.getElementById("data_compra").value = data.data_compra ?? '';
     document.getElementById("origem_compra").value = data.origem_compra ?? '';
     document.getElementById("observacao").value = data.observacao ?? '';
+    document.getElementById("comprador").value = data.comprador ?? '';
+    document.getElementById("data_venda").value = data.data_venda ?? '';
     document.getElementById("status").value = data.status ?? 'Ativo';
+
+    alternarCamposVenda();
 
     document.getElementById("btnSalvar").textContent = 'Atualizar';
     document.getElementById("btnCancelar").classList.remove('d-none');
@@ -116,12 +140,17 @@ function cancelarEdicao(){
     document.getElementById("ano").value='';
     document.getElementById("chassi").value='';
     document.getElementById("renavam").value='';
+    document.getElementById("cod_fipe").value='';
     document.getElementById("km_compra").value='';
     document.getElementById("valor_compra").value='';
     document.getElementById("data_compra").value='';
     document.getElementById("origem_compra").value='';
     document.getElementById("observacao").value='';
+    document.getElementById("comprador").value='';
+    document.getElementById("data_venda").value='';
     document.getElementById("status").value='Ativo';
+
+    alternarCamposVenda();
 
     document.getElementById("btnSalvar").textContent = 'Salvar';
     document.getElementById("btnCancelar").classList.add('d-none');
@@ -174,11 +203,14 @@ async function salvar(){
 
     const chassi=document.getElementById("chassi").value;
     const renavam=document.getElementById("renavam").value;
+    const codFipe=document.getElementById("cod_fipe").value;
     const kmCompraValor=document.getElementById("km_compra").value;
     const valorCompraValor=document.getElementById("valor_compra").value;
     const dataCompra=document.getElementById("data_compra").value;
     const origemCompra=document.getElementById("origem_compra").value;
     const observacao=document.getElementById("observacao").value;
+    const comprador=document.getElementById("comprador").value;
+    const dataVenda=document.getElementById("data_venda").value;
     const status=document.getElementById("status").value;
 
     if(!placa){
@@ -202,6 +234,8 @@ async function salvar(){
 
         renavam: renavam || null,
 
+        cod_fipe: codFipe || null,
+
         km_compra: kmCompraValor ? Number(kmCompraValor) : null,
 
         valor_compra: valorCompraValor ? Number(valorCompraValor) : null,
@@ -211,6 +245,13 @@ async function salvar(){
         origem_compra: origemCompra || null,
 
         observacao: observacao || null,
+
+        // Comprador/data da venda só ficam preenchidos quando Status =
+        // Vendido (o bloco correspondente fica escondido e é limpo pelo
+        // próprio alternarCamposVenda() quando o status muda para Ativo).
+        comprador: status === 'Vendido' ? (comprador || null) : null,
+
+        data_venda: status === 'Vendido' ? (dataVenda || null) : null,
 
         status: status || 'Ativo'
 
