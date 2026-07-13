@@ -1,8 +1,7 @@
 // Lógica da página de Condutor.
 // Login, logout e supabaseClient ficam em auth.js (compartilhado).
 //
-// Diferente de veiculos_motorista (que também liga uma pessoa a um
-// veículo), Condutor tem um período (data_inicio/data_fim) e agora é
+// Condutor tem um período (data_inicio/data_fim) e agora é
 // SEMPRE amarrado a um veículo (veiculo_id) - exigido na validação do
 // formulário. A coluna em si ficou nullable no banco porque já existiam
 // ~39 condutores cadastrados sem veículo antes desta mudança; forçar

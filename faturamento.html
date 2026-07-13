@@ -86,11 +86,11 @@
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuCadastros">
+                <a href="atividades.html" class="sidebar-link sidebar-sublink" data-rotina="atividades">Atividades</a>
                 <a href="index.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
                 <a href="condutor.html" class="sidebar-link sidebar-sublink" data-rotina="condutor">Condutor</a>
                 <a href="contratos.html" class="sidebar-link sidebar-sublink" data-rotina="contratos">Contratos</a>
                 <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
-                <a href="motorista.html" class="sidebar-link sidebar-sublink" data-rotina="motorista">Motorista</a>
                 <a href="veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="veiculos">Veículos</a>
             </div>
 
@@ -145,6 +145,23 @@
 
             <div class="card-body">
 
+                <div class="border rounded p-2 p-md-3 mb-3 bg-light no-print">
+
+                    <label class="form-label mb-1 fw-semibold">Gerar faturamento do mês</label>
+                    <p class="text-muted small mb-2">Cria automaticamente um lançamento de faturamento para cada contrato ativo no mês escolhido, usando o valor cadastrado no contrato. Você pode editar ou excluir cada lançamento depois. Rodar de novo no mesmo mês gera lançamentos duplicados.</p>
+
+                    <div class="d-flex gap-2 flex-wrap align-items-end">
+                        <div>
+                            <label class="form-label mb-0 small text-muted">Mês</label>
+                            <input id="mesGeracao" type="month" class="form-control">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="gerarFaturamentoMes()">
+                            <i class="bi bi-lightning-charge"></i> Gerar faturamento do mês
+                        </button>
+                    </div>
+
+                </div>
+
                 <div class="row g-2 mb-3">
 
                     <div class="col-12 col-sm-6 col-md-2">
@@ -152,19 +169,14 @@
                         <input id="data" type="date" class="form-control">
                     </div>
 
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <label class="form-label mb-0 small text-muted">Competência</label>
-                        <input id="comp" type="month" class="form-control">
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-md-5">
+                    <div class="col-12 col-sm-6 col-md-6">
                         <label class="form-label mb-0 small text-muted">Contrato</label>
                         <select id="contratoId" class="form-select">
                             <option value="" selected disabled>Selecione o contrato...</option>
                         </select>
                     </div>
 
-                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="col-12 col-sm-6 col-md-4">
                         <label class="form-label mb-0 small text-muted">Valor</label>
                         <input id="valor" type="number" step="0.01" class="form-control" placeholder="Valor">
                     </div>
@@ -193,7 +205,6 @@
 
                                 <th>ID</th>
                                 <th>Data</th>
-                                <th>Comp.</th>
                                 <th>Contrato</th>
                                 <th>Cliente</th>
                                 <th>Valor</th>
@@ -243,7 +254,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="faturamento.js?v=1"></script>
+<script src="faturamento.js?v=2"></script>
 
 </body>
 

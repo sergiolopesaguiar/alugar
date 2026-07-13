@@ -86,11 +86,11 @@
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuCadastros">
+                <a href="atividades.html" class="sidebar-link sidebar-sublink" data-rotina="atividades">Atividades</a>
                 <a href="index.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
                 <a href="condutor.html" class="sidebar-link sidebar-sublink" data-rotina="condutor">Condutor</a>
                 <a href="contratos.html" class="sidebar-link sidebar-sublink" data-rotina="contratos">Contratos</a>
                 <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
-                <a href="motorista.html" class="sidebar-link sidebar-sublink" data-rotina="motorista">Motorista</a>
                 <a href="veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="veiculos">Veículos</a>
             </div>
 
@@ -170,6 +170,11 @@
                     </div>
 
                     <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">KM atual</label>
+                        <input id="km_atual" type="number" class="form-control" placeholder="KM atual" title="Quilometragem do veículo no momento da manutenção">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
                         <label class="form-label mb-0 small text-muted">Data entrada</label>
                         <input id="data_entrada" type="date" class="form-control">
                     </div>
@@ -207,6 +212,7 @@
                                 <th>Telefone</th>
                                 <th>Email</th>
                                 <th>Responsável</th>
+                                <th>KM atual</th>
                                 <th>Entrada</th>
                                 <th>Saída</th>
                                 <th>Ações</th>
@@ -258,7 +264,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="manutencao.js?v=3"></script>
+<script src="manutencao.js?v=4"></script>
 
 </body>
 

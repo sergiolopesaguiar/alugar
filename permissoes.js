@@ -12,14 +12,14 @@ const PAGINA_SOMENTE_ADMIN = true;
 //
 // Lista fixa das rotinas que podem ser controladas por usuário. Precisa
 // bater com os valores usados em data-rotina no menu e na constante
-// ROTINA_ATUAL de cada página (app.js, veiculos.js, motorista.js,
+// ROTINA_ATUAL de cada página (app.js, veiculos.js, atividades.js,
 // manutencao.js). As páginas de administração (Usuários/Permissões) não
 // entram nessa lista de propósito, pra evitar alguém se trancar fora
 // delas sem querer.
 const ROTINAS = [
     {codigo: 'clientes', label: 'Clientes'},
     {codigo: 'veiculos', label: 'Veículos'},
-    {codigo: 'motorista', label: 'Motorista'},
+    {codigo: 'atividades', label: 'Atividades'},
     {codigo: 'condutor', label: 'Condutor'},
     {codigo: 'contratos', label: 'Contratos'},
     {codigo: 'manutencao', label: 'Manutenção'},

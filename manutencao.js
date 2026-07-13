@@ -106,6 +106,8 @@ async function carregar(){
 
             <td>${m.responsavel ?? ''}</td>
 
+            <td>${m.km_atual ?? ''}</td>
+
             <td>${m.data_entrada ? new Date(m.data_entrada + 'T00:00:00').toLocaleDateString('pt-BR') : ''}</td>
 
             <td>${m.data_saida ? new Date(m.data_saida + 'T00:00:00').toLocaleDateString('pt-BR') : ''}</td>
@@ -147,6 +149,7 @@ async function editar(id){
     document.getElementById("telefone").value = data.telefone ?? '';
     document.getElementById("email").value = data.email ?? '';
     document.getElementById("responsavel").value = data.responsavel ?? '';
+    document.getElementById("km_atual").value = data.km_atual ?? '';
     document.getElementById("data_entrada").value = data.data_entrada ?? '';
     document.getElementById("data_saida").value = data.data_saida ?? '';
 
@@ -164,6 +167,7 @@ function cancelarEdicao(){
     document.getElementById("telefone").value = '';
     document.getElementById("email").value = '';
     document.getElementById("responsavel").value = '';
+    document.getElementById("km_atual").value = '';
     document.getElementById("data_entrada").value = '';
     document.getElementById("data_saida").value = '';
 
@@ -213,6 +217,7 @@ async function salvar(){
     // Pedido do Sérgio: email de manutenção sempre gravado em minúsculo.
     const email = document.getElementById("email").value.trim().toLowerCase();
     const responsavel = document.getElementById("responsavel").value.trim();
+    const kmAtual = document.getElementById("km_atual").value;
     const dataEntrada = document.getElementById("data_entrada").value;
     const dataSaida = document.getElementById("data_saida").value;
 
@@ -232,6 +237,7 @@ async function salvar(){
         telefone: telefone || null,
         email: email || null,
         responsavel: responsavel || null,
+        km_atual: kmAtual ? Number(kmAtual) : null,
         data_entrada: dataEntrada || null,
         data_saida: dataSaida || null
     };

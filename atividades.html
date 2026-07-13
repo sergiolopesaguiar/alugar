@@ -7,7 +7,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Sistema - Usuários</title>
+    <title>Sistema - Atividades</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -86,7 +86,7 @@
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuCadastros">
-                <a href="atividades.html" class="sidebar-link sidebar-sublink" data-rotina="atividades">Atividades</a>
+                <a href="atividades.html" class="sidebar-link sidebar-sublink active" data-rotina="atividades">Atividades</a>
                 <a href="index.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
                 <a href="condutor.html" class="sidebar-link sidebar-sublink" data-rotina="condutor">Condutor</a>
                 <a href="contratos.html" class="sidebar-link sidebar-sublink" data-rotina="contratos">Contratos</a>
@@ -121,7 +121,7 @@
                 <span class="menu-caret">&#9662;</span>
             </a>
             <div class="collapse show" id="menuAdministracao">
-                <a href="usuarios.html" class="sidebar-link sidebar-sublink active" data-admin-only="sim">Usuários</a>
+                <a href="usuarios.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Usuários</a>
                 <a href="permissoes.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Permissões</a>
             </div>
 
@@ -137,7 +137,7 @@
 
             <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
 
-                <h3 class="mb-0 h4">Usuários</h3>
+                <h3 class="mb-0 h4">Atividades</h3>
 
                 <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair</button>
 
@@ -147,21 +147,38 @@
 
                 <div class="row g-2 mb-3">
 
-                    <div class="col-12 col-sm-6 col-md-4">
-                        <input id="usuario" class="form-control" placeholder="Usuário">
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0 small text-muted">Veículo</label>
+                        <select id="veiculoId" class="form-select" title="Veículo relacionado a esta atividade (obrigatório)">
+                            <option value="" selected disabled>Selecione o veículo...</option>
+                        </select>
                     </div>
 
-                    <div class="col-12 col-sm-6 col-md-4">
-                        <input id="senha" type="password" class="form-control" placeholder="Senha">
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0 small text-muted">Condutor</label>
+                        <select id="condutorId" class="form-select" title="Condutor responsável pela atividade (opcional)">
+                            <option value="">(sem condutor)</option>
+                        </select>
                     </div>
 
-                    <div class="col-12 col-sm-6 col-md-3 d-flex align-items-center">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="isAdmin">
-                            <label class="form-check-label" for="isAdmin">
-                                Administrador
-                            </label>
-                        </div>
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Tipo</label>
+                        <input id="tipoAtividade" class="form-control" placeholder="Ex: Entrega, Deslocamento" title="Tipo de atividade">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Data</label>
+                        <input id="data" type="date" class="form-control" title="Data da atividade">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">KM</label>
+                        <input id="km" type="number" class="form-control" placeholder="KM" title="Quilometragem registrada nesta atividade">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label mb-0 small text-muted">Observação</label>
+                        <input id="observacao" class="form-control" placeholder="Observação">
                     </div>
 
                 </div>
@@ -187,9 +204,12 @@
                             <tr>
 
                                 <th>ID</th>
-                                <th>Usuário</th>
-                                <th>Admin</th>
-                                <th>Criado em</th>
+                                <th>Veículo</th>
+                                <th>Condutor</th>
+                                <th>Tipo</th>
+                                <th>Data</th>
+                                <th>KM</th>
+                                <th>Observação</th>
                                 <th>Ações</th>
 
                             </tr>
@@ -239,7 +259,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="usuarios.js?v=2"></script>
+<script src="atividades.js?v=1"></script>
 
 </body>
 
