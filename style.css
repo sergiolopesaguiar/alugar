@@ -212,3 +212,103 @@ table{
     padding:.35rem 1rem;
 
 }
+
+/* Tela de login: fundo em degradê ocupando a tela toda, com o card
+   flutuando no centro. Pedido do Sérgio para deixar menos "seca" que um
+   card simples sobre fundo cinza. */
+
+.login-wrapper{
+
+    min-height:100vh;
+    width:100%;
+    padding:1rem;
+    background:linear-gradient(135deg, #0d6efd 0%, #0a58ca 55%, #073b7a 100%);
+
+}
+
+.login-card{
+
+    background:#fff;
+    border-radius:20px;
+    padding:2.5rem 2rem;
+    max-width:400px;
+    width:100%;
+
+}
+
+.login-icon{
+
+    width:64px;
+    height:64px;
+    margin:0 auto 1rem;
+    border-radius:50%;
+    background:linear-gradient(135deg, #0d6efd, #0a58ca);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.75rem;
+    box-shadow:0 8px 16px rgba(13,110,253,.35);
+
+}
+
+.login-title{
+
+    text-align:center;
+    font-weight:700;
+    margin-bottom:.25rem;
+
+}
+
+.login-subtitle{
+
+    text-align:center;
+    color:#6c757d;
+    font-size:.9rem;
+    margin-bottom:1.75rem;
+
+}
+
+.login-card .input-group-text{
+
+    background:#f4f6f9;
+    border-right:0;
+    color:#6c757d;
+
+}
+
+.login-card .form-control{
+
+    border-left:0;
+
+}
+
+.login-card .form-control:focus{
+
+    box-shadow:none;
+    border-color:#86b7fe;
+
+}
+
+.login-card .input-group:focus-within .input-group-text{
+
+    border-color:#86b7fe;
+
+}
+
+.login-btn{
+
+    padding:.65rem;
+    font-weight:600;
+    border-radius:10px;
+    margin-top:.25rem;
+
+}
+
+@media (max-width: 575.98px){
+
+    .login-card{
+        padding:2rem 1.5rem;
+    }
+
+}
