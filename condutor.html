@@ -218,6 +218,7 @@
                                 <th>Início</th>
                                 <th>Fim</th>
                                 <th>Observação</th>
+                                <th>Documentos</th>
                                 <th>Ações</th>
 
                             </tr>
@@ -256,7 +257,11 @@
                 <div class="row g-2 mb-3">
 
                     <div class="col-12 col-sm-5">
-                        <input id="docTipo" class="form-control" placeholder="Tipo (ex: CNH, Termo de Responsabilidade)" title="Descreva o tipo deste documento">
+                        <select id="docTipo" class="form-select" title="Tipo deste documento">
+                            <option value="" selected disabled>Selecione o tipo...</option>
+                            <option value="CNH">CNH</option>
+                            <option value="Termo de Responsabilidade">Termo de Responsabilidade</option>
+                        </select>
                     </div>
 
                     <div class="col-12 col-sm-5">
@@ -316,7 +321,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="condutor.js?v=4"></script>
+<script src="condutor.js?v=5"></script>
 
 </body>
 

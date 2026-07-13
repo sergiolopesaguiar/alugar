@@ -14,6 +14,15 @@ const ROTINA_ATUAL = 'condutor';
 let editandoId = null;
 let condutorDocumentosAtual = null; // id do condutor com o modal de documentos aberto
 
+// Únicos tipos de documento aceitos hoje (mesma lista das <option> do select
+// #docTipo em condutor.html). Usada para saber quais documentos "contam"
+// no controle de pendências da grid principal - documentos com um tipo
+// fora desta lista (ex: registros antigos digitados livremente antes desta
+// mudança) continuam existindo e aparecem no modal, mas não zeram a
+// pendência de CNH/Termo se o tipo não bater exatamente. Para expandir os
+// tipos aceitos no futuro, adicionar aqui E nas <option> do HTML.
+const TIPOS_DOCUMENTO_OBRIGATORIOS = ['CNH', 'Termo de Responsabilidade'];
+
 // Aplica máscara (00) 00000-0000 / (00) 0000-0000 enquanto o usuário digita.
 function formatarTelefone(valor){
     let d = valor.replace(/\D/g, '').slice(0, 11);
@@ -63,14 +72,59 @@ async function carregarVeiculos(){
 
 }
 
+// Busca todos os documentos de todos os condutores numa única query (em vez
+// de uma query por linha da grid) e devolve um Map condutor_id -> Set dos
+// tipos de documento presentes, já restrito a TIPOS_DOCUMENTO_OBRIGATORIOS.
+async function carregarMapaDocumentos(){
+
+    const {data, error} = await supabaseClient
+        .from('condutor_documentos')
+        .select('condutor_id, tipo_documento');
+
+    const mapa = new Map();
+
+    if(error || !data){
+        return mapa;
+    }
+
+    data.forEach(doc => {
+        if(!TIPOS_DOCUMENTO_OBRIGATORIOS.includes(doc.tipo_documento)){
+            return;
+        }
+        if(!mapa.has(doc.condutor_id)){
+            mapa.set(doc.condutor_id, new Set());
+        }
+        mapa.get(doc.condutor_id).add(doc.tipo_documento);
+    });
+
+    return mapa;
+
+}
+
+// Monta os badges de controle (verde = enviado, vermelho = pendente) para
+// os tipos obrigatórios de um condutor específico.
+function montarBadgesDocumentos(tiposPresentes){
+
+    return TIPOS_DOCUMENTO_OBRIGATORIOS.map(tipo => {
+        const enviado = tiposPresentes && tiposPresentes.has(tipo);
+        const cor = enviado ? 'bg-success' : 'bg-danger';
+        const icone = enviado ? 'bi-check-lg' : 'bi-x-lg';
+        return `<span class="badge ${cor} me-1" title="${tipo}${enviado ? ' - enviado' : ' - pendente'}"><i class="bi ${icone}"></i> ${tipo}</span>`;
+    }).join('');
+
+}
+
 async function carregar(){
 
     await carregarVeiculos();
 
-    const {data, error} = await supabaseClient
-        .from('condutores')
-        .select('*, veiculos(placa, fabricante, modelo)')
-        .order('id');
+    const [{data, error}, mapaDocumentos] = await Promise.all([
+        supabaseClient
+            .from('condutores')
+            .select('*, veiculos(placa, fabricante, modelo)')
+            .order('id'),
+        carregarMapaDocumentos()
+    ]);
 
     if(error){
         alert(error.message);
@@ -86,6 +140,7 @@ async function carregar(){
         const veiculo = c.veiculos
             ? [c.veiculos.placa, [c.veiculos.fabricante, c.veiculos.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ')
             : '<span class="text-danger">(sem veículo)</span>';
+        const badgesDocumentos = montarBadgesDocumentos(mapaDocumentos.get(c.id));
 
         html += `
         <tr>
@@ -97,6 +152,7 @@ async function carregar(){
             <td>${inicio}</td>
             <td>${fim}</td>
             <td>${c.observacao ?? ''}</td>
+            <td>${badgesDocumentos}</td>
             <td>
                 <div class="d-flex gap-1">
                     <button class="btn btn-sm btn-outline-secondary" title="Documentos" onclick="abrirDocumentos(${c.id}, '${c.nome.replace(/'/g, "\\'")}')"><i class="bi bi-folder2-open"></i></button>
@@ -320,9 +376,14 @@ async function carregarDocumentos(){
 
 async function enviarDocumento(){
 
-    const tipo = document.getElementById('docTipo').value.trim();
+    const tipo = document.getElementById('docTipo').value;
     const campoArquivo = document.getElementById('docArquivo');
     const arquivo = campoArquivo.files[0];
+
+    if(!tipo){
+        alert('Selecione o tipo do documento.');
+        return;
+    }
 
     if(!arquivo){
         alert('Selecione um arquivo.');
@@ -348,7 +409,7 @@ async function enviarDocumento(){
         .from('condutor_documentos')
         .insert({
             condutor_id: condutorDocumentosAtual,
-            tipo_documento: tipo || null,
+            tipo_documento: tipo,
             arquivo_nome: arquivo.name,
             arquivo_path: caminho
         });
@@ -360,7 +421,10 @@ async function enviarDocumento(){
     document.getElementById('docTipo').value = '';
     campoArquivo.value = '';
 
+    // Atualiza a lista dentro do modal E a grid principal por trás dele,
+    // já que a coluna "Documentos" da grid depende do que acabou de mudar.
     carregarDocumentos();
+    carregar();
 
 }
 
@@ -390,6 +454,7 @@ async function excluirDocumento(id, caminho){
     }
 
     carregarDocumentos();
+    carregar();
 
 }
 
