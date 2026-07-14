@@ -268,6 +268,8 @@ async function editar(id){
     document.getElementById("btnSalvar").textContent = 'Atualizar';
     document.getElementById("btnCancelar").classList.remove('d-none');
 
+    document.getElementById("cliente_id").focus();
+
 }
 
 async function cancelarEdicao(){

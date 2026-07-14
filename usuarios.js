@@ -79,6 +79,8 @@ function editar(usuario){
     document.getElementById("btnSalvar").textContent = 'Atualizar';
     document.getElementById("btnCancelar").classList.remove('d-none');
 
+    document.getElementById("senha").focus();
+
 }
 
 function cancelarEdicao(){

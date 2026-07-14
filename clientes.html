@@ -7,7 +7,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Sistema - Dashboard</title>
+    <title>Sistema - Clientes</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -81,7 +81,7 @@
                 <button type="button" class="btn-colapsar-menu" onclick="alternarMenu()" title="Esconder menu">&#9664;</button>
             </div>
 
-            <a href="index.html" class="sidebar-link active" data-rotina="dashboard">Dashboard</a>
+            <a href="index.html" class="sidebar-link" data-rotina="dashboard">Dashboard</a>
 
             <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuCadastros" role="button" aria-expanded="true" aria-controls="menuCadastros">
                 <span>Cadastros</span>
@@ -89,7 +89,7 @@
             </a>
             <div class="collapse show" id="menuCadastros">
                 <a href="atividades.html" class="sidebar-link sidebar-sublink" data-rotina="atividades">Atividades</a>
-                <a href="clientes.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
+                <a href="clientes.html" class="sidebar-link sidebar-sublink active" data-rotina="clientes">Clientes</a>
                 <a href="condutor.html" class="sidebar-link sidebar-sublink" data-rotina="condutor">Condutor</a>
                 <a href="contratos.html" class="sidebar-link sidebar-sublink" data-rotina="contratos">Contratos</a>
                 <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
@@ -139,7 +139,7 @@
 
             <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
 
-                <h3 class="mb-0 h4">Dashboard</h3>
+                <h3 class="mb-0 h4">Clientes</h3>
 
                 <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair</button>
 
@@ -147,47 +147,84 @@
 
             <div class="card-body">
 
-                <div class="row g-3 mb-4">
+                <div class="row g-2 mb-2">
 
-                    <div class="col-6 col-md-3">
-                        <div class="card text-center shadow-sm border-0 bg-light">
-                            <div class="card-body py-3">
-                                <div class="small text-muted">Total de Atividades</div>
-                                <div class="h3 mb-0" id="cardTotal">0</div>
-                            </div>
-                        </div>
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">CPF/CNPJ</label>
+                        <input id="cpfCnpj" class="form-control" placeholder="CPF ou CNPJ" maxlength="18">
                     </div>
 
-                    <div class="col-6 col-md-3">
-                        <div class="card text-center shadow-sm border-0 bg-warning bg-opacity-25">
-                            <div class="card-body py-3">
-                                <div class="small text-muted">Pendentes</div>
-                                <div class="h3 mb-0" id="cardPendentes">0</div>
-                            </div>
-                        </div>
+                    <div class="col-12 col-sm-6 col-md-4">
+                        <label class="form-label mb-0 small text-muted">Nome</label>
+                        <input id="nome" class="form-control" placeholder="Nome">
                     </div>
 
-                    <div class="col-6 col-md-3">
-                        <div class="card text-center shadow-sm border-0 bg-success bg-opacity-25">
-                            <div class="card-body py-3">
-                                <div class="small text-muted">Concluídas</div>
-                                <div class="h3 mb-0" id="cardConcluidas">0</div>
-                            </div>
-                        </div>
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Email</label>
+                        <input id="email" type="email" class="form-control" placeholder="Email">
                     </div>
 
-                    <div class="col-6 col-md-3">
-                        <div class="card text-center shadow-sm border-0 bg-danger bg-opacity-25">
-                            <div class="card-body py-3">
-                                <div class="small text-muted">Atrasadas (pendentes)</div>
-                                <div class="h3 mb-0" id="cardAtrasadas">0</div>
-                            </div>
-                        </div>
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Telefone</label>
+                        <input id="telefone" class="form-control" placeholder="(00) 00000-0000" maxlength="15">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">CEP</label>
+                        <input id="cep" class="form-control" placeholder="CEP" maxlength="9">
                     </div>
 
                 </div>
 
-                <h5 class="mb-2">Atividades</h5>
+                <div class="row g-2 mb-3">
+
+                    <div class="col-12 col-sm-6 col-md-4">
+                        <label class="form-label mb-0 small text-muted">Logradouro</label>
+                        <input id="logradouro" class="form-control" placeholder="Logradouro">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label mb-0 small text-muted">Bairro</label>
+                        <input id="bairro" class="form-control" placeholder="Bairro">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-1">
+                        <label class="form-label mb-0 small text-muted">UF</label>
+                        <select id="uf" class="form-select">
+                            <option value="" selected disabled>UF</option>
+                            <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+                            <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                            <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+                            <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+                            <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                            <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+                            <option>SP</option><option>SE</option><option>TO</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Cidade</label>
+                        <input id="cidade" class="form-control" placeholder="Cidade">
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label mb-0 small text-muted">Número</label>
+                        <input id="numeroEndereco" class="form-control" placeholder="Número">
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button id="btnSalvar" class="btn btn-success botao-salvar" onclick="salvar()">
+                        Salvar
+                    </button>
+
+                    <button id="btnCancelar" class="btn btn-secondary botao-salvar d-none" onclick="cancelarEdicao()">
+                        Cancelar
+                    </button>
+                </div>
+
+                <hr>
 
                 <div class="table-responsive">
 
@@ -198,13 +235,17 @@
                             <tr>
 
                                 <th>ID</th>
-                                <th>Veículo</th>
-                                <th>Condutor</th>
-                                <th>Tipo</th>
-                                <th>Data Previsão</th>
-                                <th>Status</th>
-                                <th>KM</th>
-                                <th>Observação</th>
+                                <th>Nome</th>
+                                <th>CPF/CNPJ</th>
+                                <th>Email</th>
+                                <th>Telefone</th>
+                                <th>CEP</th>
+                                <th>Logradouro</th>
+                                <th>Número</th>
+                                <th>Bairro</th>
+                                <th>UF</th>
+                                <th>Cidade</th>
+                                <th>Ações</th>
 
                             </tr>
 
@@ -216,8 +257,6 @@
 
                 </div>
 
-                <p class="small text-muted mt-2 mb-0">Esta lista é somente leitura. Para editar, excluir ou criar atividades, acesse a tela <a href="atividades.html">Atividades</a>.</p>
-
             </div>
 
         </div>
@@ -228,14 +267,29 @@
 
 </div>
 
+<div class="modal fade" id="modalReceita" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dados da Receita Federal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" id="modalReceitaCorpo"></div>
+        </div>
+    </div>
+</div>
+
 <div id="statusBar" class="status-bar d-none no-print">
     Usuário logado: <strong id="statusBarUsuario"></strong>
 </div>
 
 <script>
 // Decide login/dashboard IMEDIATAMENTE, sem esperar os scripts externos
-// (Supabase/Bootstrap) carregarem da CDN - evita o "flash" do formulário
-// de login ao trocar de aba/página.
+// (Supabase/Bootstrap) carregarem da CDN. Sem isso, o navegador pinta o
+// estado padrão do HTML (login visível) e só troca para o dashboard quando
+// checarLogin() roda no final do script da página - o que demora até os
+// CDNs responderem, causando o "flash" do formulário de login ao trocar
+// de aba/página mesmo já estando logado.
 (function(){
     var logado = localStorage.getItem('logado') === 'sim';
     document.getElementById('loginBox').classList.toggle('d-none', logado);
@@ -255,7 +309,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="dashboard.js?v=1"></script>
+<script src="app.js?v=2"></script>
 
 </body>
 

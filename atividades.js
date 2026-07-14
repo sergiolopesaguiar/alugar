@@ -94,7 +94,8 @@ async function carregar(){
             : '<span class="text-danger">(sem veículo)</span>';
 
         const condutor = a.condutores?.nome ?? '';
-        const dataFmt = a.data ? new Date(a.data + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+        const dataFmt = a.data_previsao ? new Date(a.data_previsao + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+        const statusCor = a.status === 'Concluída' ? 'bg-success' : 'bg-warning text-dark';
 
         html += `
         <tr>
@@ -103,6 +104,7 @@ async function carregar(){
             <td>${condutor}</td>
             <td>${a.tipo_atividade ?? ''}</td>
             <td>${dataFmt}</td>
+            <td><span class="badge ${statusCor}">${a.status ?? 'Pendente'}</span></td>
             <td>${a.km ?? ''}</td>
             <td>${a.observacao ?? ''}</td>
             <td>
@@ -138,12 +140,15 @@ async function editar(id){
     document.getElementById("veiculoId").value = data.veiculo_id ?? '';
     document.getElementById("condutorId").value = data.condutor_id ?? '';
     document.getElementById("tipoAtividade").value = data.tipo_atividade ?? '';
-    document.getElementById("data").value = data.data ?? '';
+    document.getElementById("dataPrevisao").value = data.data_previsao ?? '';
+    document.getElementById("status").value = data.status ?? 'Pendente';
     document.getElementById("km").value = data.km ?? '';
     document.getElementById("observacao").value = data.observacao ?? '';
 
     document.getElementById("btnSalvar").textContent = 'Atualizar';
     document.getElementById("btnCancelar").classList.remove('d-none');
+
+    document.getElementById("veiculoId").focus();
 
 }
 
@@ -154,7 +159,8 @@ function cancelarEdicao(){
     document.getElementById("veiculoId").value = '';
     document.getElementById("condutorId").value = '';
     document.getElementById("tipoAtividade").value = '';
-    document.getElementById("data").value = '';
+    document.getElementById("dataPrevisao").value = '';
+    document.getElementById("status").value = 'Pendente';
     document.getElementById("km").value = '';
     document.getElementById("observacao").value = '';
 
@@ -201,7 +207,8 @@ async function salvar(){
     const veiculoId = document.getElementById("veiculoId").value;
     const condutorId = document.getElementById("condutorId").value;
     const tipoAtividade = document.getElementById("tipoAtividade").value.trim();
-    const dataValor = document.getElementById("data").value;
+    const dataValor = document.getElementById("dataPrevisao").value;
+    const status = document.getElementById("status").value;
     const km = document.getElementById("km").value;
     const observacao = document.getElementById("observacao").value;
 
@@ -214,7 +221,8 @@ async function salvar(){
         veiculo_id: Number(veiculoId),
         condutor_id: condutorId ? Number(condutorId) : null,
         tipo_atividade: tipoAtividade || null,
-        data: dataValor || null,
+        data_previsao: dataValor || null,
+        status: status || 'Pendente',
         km: km ? Number(km) : null,
         observacao: observacao || null
     };

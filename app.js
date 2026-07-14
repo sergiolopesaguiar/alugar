@@ -541,6 +541,8 @@ async function editar(id){
         dadosReceita = receitaParcial;
     }
 
+    document.getElementById("cpfCnpj").focus();
+
     document.getElementById("nome").value = data.nome ?? '';
     document.getElementById("cpfCnpj").value = data.cpf_cnpj ?? '';
     document.getElementById("email").value = data.email ?? '';

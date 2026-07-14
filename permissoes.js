@@ -17,6 +17,7 @@ const PAGINA_SOMENTE_ADMIN = true;
 // entram nessa lista de propósito, pra evitar alguém se trancar fora
 // delas sem querer.
 const ROTINAS = [
+    {codigo: 'dashboard', label: 'Dashboard'},
     {codigo: 'clientes', label: 'Clientes'},
     {codigo: 'veiculos', label: 'Veículos'},
     {codigo: 'atividades', label: 'Atividades'},
