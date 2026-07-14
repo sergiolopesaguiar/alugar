@@ -306,11 +306,30 @@ async function salvar(){
 }
 
 // ---------------------------------------------------------------------
-// Documentos do condutor (modal). Arquivos ficam no bucket público
-// "condutor-documentos" do Supabase Storage (mesma convenção de acesso
-// aberto usada no resto do sistema - sem login extra pra baixar o link).
-// Metadados (tipo, nome, caminho) ficam na tabela condutor_documentos.
+// Documentos do condutor (modal). A partir de 2026-07-13, novos arquivos
+// vão para a pasta "condutor-documentos/" do repositório GitHub "alugar"
+// (não mais para o Supabase Storage) - pedido do Sérgio para economizar
+// espaço no Supabase. O upload/exclusão passa pela Edge Function
+// "github-documento", que guarda um GITHUB_TOKEN como secret do lado do
+// servidor (nunca no código do site) e fala com a API do GitHub.
+// Registros antigos (enviados antes desta mudança) continuam apontando
+// para o bucket "condutor-documentos" do Supabase Storage - por isso
+// carregarDocumentos() e excluirDocumento() tratam os dois casos,
+// diferenciando pela presença da coluna arquivo_url (só preenchida para
+// arquivos hospedados no GitHub).
+// Metadados (tipo, nome, caminho/URL) ficam na tabela condutor_documentos.
 // ---------------------------------------------------------------------
+
+// Converte um File em base64 puro (sem o prefixo "data:...;base64,"),
+// formato que a API de Contents do GitHub espera no campo "content".
+function arquivoParaBase64(arquivo){
+    return new Promise((resolve, reject) => {
+        const leitor = new FileReader();
+        leitor.onload = () => resolve(leitor.result.split(',')[1]);
+        leitor.onerror = reject;
+        leitor.readAsDataURL(arquivo);
+    });
+}
 
 async function abrirDocumentos(condutorId, nomeCondutor){
 
@@ -351,19 +370,23 @@ async function carregarDocumentos(){
 
     (data || []).forEach(doc => {
 
-        const {data: urlData} = supabaseClient.storage
+        // arquivo_url só existe para documentos novos (hospedados no
+        // GitHub) - registros antigos (Supabase Storage) reconstroem a URL
+        // pública a partir do bucket, como sempre foi feito.
+        const url = doc.arquivo_url || supabaseClient.storage
             .from('condutor-documentos')
-            .getPublicUrl(doc.arquivo_path);
+            .getPublicUrl(doc.arquivo_path).data.publicUrl;
 
         const enviadoEm = doc.criado_em ? new Date(doc.criado_em).toLocaleString('pt-BR') : '';
+        const urlParaOnclick = doc.arquivo_url ? `'${doc.arquivo_url}'` : 'null';
 
         html += `
         <tr>
             <td>${doc.tipo_documento ?? '(sem tipo)'}</td>
-            <td><a href="${urlData.publicUrl}" target="_blank" rel="noopener">${doc.arquivo_nome ?? 'Abrir'}</a></td>
+            <td><a href="${url}" target="_blank" rel="noopener">${doc.arquivo_nome ?? 'Abrir'}</a></td>
             <td>${enviadoEm}</td>
             <td>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="excluirDocumento(${doc.id}, '${doc.arquivo_path}')"><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="excluirDocumento(${doc.id}, '${doc.arquivo_path}', ${urlParaOnclick})"><i class="bi bi-trash"></i></button>
             </td>
         </tr>
         `;
@@ -394,14 +417,27 @@ async function enviarDocumento(){
         return;
     }
 
-    const caminho = `${condutorDocumentosAtual}/${Date.now()}_${arquivo.name}`;
+    const caminho = `condutor-documentos/${condutorDocumentosAtual}/${Date.now()}_${arquivo.name}`;
 
-    const {error: erroUpload} = await supabaseClient.storage
-        .from('condutor-documentos')
-        .upload(caminho, arquivo);
+    let contentBase64;
+    try {
+        contentBase64 = await arquivoParaBase64(arquivo);
+    } catch(e){
+        alert('Erro ao ler o arquivo: ' + e.message);
+        return;
+    }
+
+    const {data: dadosGithub, error: erroUpload} = await supabaseClient.functions.invoke('github-documento', {
+        body: {
+            action: 'upload',
+            path: caminho,
+            contentBase64,
+            mensagem: `Documento (${tipo}) - condutor #${condutorDocumentosAtual}`
+        }
+    });
 
     if(erroUpload){
-        alert('Erro ao enviar o arquivo: ' + erroUpload.message);
+        alert('Erro ao enviar o arquivo para o GitHub: ' + erroUpload.message);
         return;
     }
 
@@ -411,7 +447,8 @@ async function enviarDocumento(){
             condutor_id: condutorDocumentosAtual,
             tipo_documento: tipo,
             arquivo_nome: arquivo.name,
-            arquivo_path: caminho
+            arquivo_path: caminho,
+            arquivo_url: dadosGithub.url
         });
 
     if(erroInsert){
@@ -428,19 +465,40 @@ async function enviarDocumento(){
 
 }
 
-async function excluirDocumento(id, caminho){
+async function excluirDocumento(id, caminho, url){
 
     if(!confirm('Excluir este documento? Essa ação não pode ser desfeita.')){
         return;
     }
 
-    const {error: erroStorage} = await supabaseClient.storage
-        .from('condutor-documentos')
-        .remove([caminho]);
+    if(url){
 
-    if(erroStorage){
-        alert('Erro ao excluir o arquivo: ' + erroStorage.message);
-        return;
+        // Documento novo, hospedado no GitHub - exclui via Edge Function.
+        const {error: erroGithub} = await supabaseClient.functions.invoke('github-documento', {
+            body: {
+                action: 'delete',
+                path: caminho,
+                mensagem: `Excluir documento (registro #${id})`
+            }
+        });
+
+        if(erroGithub){
+            alert('Erro ao excluir o arquivo no GitHub: ' + erroGithub.message);
+            return;
+        }
+
+    } else {
+
+        // Documento antigo, ainda no Supabase Storage.
+        const {error: erroStorage} = await supabaseClient.storage
+            .from('condutor-documentos')
+            .remove([caminho]);
+
+        if(erroStorage){
+            alert('Erro ao excluir o arquivo: ' + erroStorage.message);
+            return;
+        }
+
     }
 
     const {error: erroDelete} = await supabaseClient
