@@ -1,8 +1,9 @@
 // Lógica da página de Atividades.
 // Login, logout e supabaseClient ficam em auth.js (compartilhado).
 //
-// Cada atividade é sempre ligada a um veículo (obrigatório) e, opcionalmente,
-// a um condutor. Registra tipo de atividade, data, km no momento e observação.
+// Veículo e condutor são ambos opcionais - uma atividade pode ser registrada
+// sem vínculo com nenhum veículo específico. Registra tipo de atividade,
+// data prevista, status, km no momento e observação.
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'atividades';
@@ -25,7 +26,7 @@ async function carregarVeiculos(){
         return;
     }
 
-    let html = '<option value="" selected disabled>Selecione o veículo...</option>';
+    let html = '<option value="">(sem veículo)</option>';
 
     (data || []).forEach(v => {
         const rotulo = [v.placa, [v.fabricante, v.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ');
@@ -212,13 +213,8 @@ async function salvar(){
     const km = document.getElementById("km").value;
     const observacao = document.getElementById("observacao").value;
 
-    if(!veiculoId){
-        alert('Selecione o veículo. Toda atividade precisa estar vinculada a um veículo.');
-        return;
-    }
-
     const dados = {
-        veiculo_id: Number(veiculoId),
+        veiculo_id: veiculoId ? Number(veiculoId) : null,
         condutor_id: condutorId ? Number(condutorId) : null,
         tipo_atividade: tipoAtividade || null,
         data_previsao: dataValor || null,
