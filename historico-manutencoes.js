@@ -2,11 +2,13 @@
 // Login, logout e supabaseClient ficam em auth.js (compartilhado).
 // Tabela manutencao_historico: veiculo_id (FK para veiculos.id), data, local,
 // servico, km, valor, forma_pagamento, observacao, troca_oleo_km,
-// troca_correia_km, reembolso.
+// troca_correia_km, reembolso, a_cobrar.
 //
-// Alerta "A COBRAR": mesmo critério usado na planilha de controle de
-// veículos - quando VALOR está preenchido mas REEMBOLSO ainda está vazio
-// (ou zero), o serviço ainda não foi cobrado do cliente/locatária.
+// Alerta "A COBRAR": agora é um campo manual (checkbox "A cobrar" no
+// formulário), não é mais calculado automaticamente a partir de valor x
+// reembolso. Ao criar um lançamento novo o checkbox já vem marcado (mesmo
+// critério de antes, como sugestão), mas o usuário pode marcar ou
+// desmarcar livremente, tanto ao criar quanto ao editar.
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'historico_manutencoes';
@@ -51,12 +53,9 @@ function formatarMoeda(valor){
     return numero.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
 }
 
-// Um lançamento fica "A COBRAR" quando tem valor lançado mas ainda não foi
-// marcado como reembolsado - mesma regra usada na planilha de controle.
+// Um lançamento fica "A COBRAR" quando o campo manual a_cobrar está marcado.
 function estaACobrar(m){
-    const valor = Number(m.valor) || 0;
-    const reembolso = Number(m.reembolso) || 0;
-    return valor > 0 && reembolso <= 0;
+    return m.a_cobrar === true;
 }
 
 async function carregar(){
@@ -182,6 +181,7 @@ async function editar(id){
     document.getElementById('trocaOleoKm').value = data.troca_oleo_km ?? '';
     document.getElementById('trocaCorreiaKm').value = data.troca_correia_km ?? '';
     document.getElementById('reembolso').value = data.reembolso ?? '';
+    document.getElementById('aCobrar').checked = data.a_cobrar === true;
 
     document.getElementById('btnSalvar').textContent = 'Atualizar';
     document.getElementById('btnCancelar').classList.remove('d-none');
@@ -204,6 +204,7 @@ function cancelarEdicao(){
     document.getElementById('trocaOleoKm').value = '';
     document.getElementById('trocaCorreiaKm').value = '';
     document.getElementById('reembolso').value = '';
+    document.getElementById('aCobrar').checked = true;
 
     document.getElementById('btnSalvar').textContent = 'Salvar';
     document.getElementById('btnCancelar').classList.add('d-none');
@@ -253,6 +254,7 @@ async function salvar(){
     const trocaOleoKm = document.getElementById('trocaOleoKm').value;
     const trocaCorreiaKm = document.getElementById('trocaCorreiaKm').value;
     const reembolso = document.getElementById('reembolso').value;
+    const aCobrar = document.getElementById('aCobrar').checked;
 
     const dados = {
         veiculo_id: Number(veiculoId),
@@ -265,7 +267,8 @@ async function salvar(){
         observacao: observacao || null,
         troca_oleo_km: trocaOleoKm ? Number(trocaOleoKm) : null,
         troca_correia_km: trocaCorreiaKm ? Number(trocaCorreiaKm) : null,
-        reembolso: reembolso !== '' ? Number(reembolso) : null
+        reembolso: reembolso !== '' ? Number(reembolso) : null,
+        a_cobrar: aCobrar
     };
 
     let error;
