@@ -1,0 +1,299 @@
+// Lógica da página Veículos > Histórico de Manutenções.
+// Login, logout e supabaseClient ficam em auth.js (compartilhado).
+// Tabela manutencao_historico: veiculo_id (FK para veiculos.id), data, local,
+// servico, km, valor, forma_pagamento, observacao, troca_oleo_km,
+// troca_correia_km, reembolso.
+//
+// Alerta "A COBRAR": mesmo critério usado na planilha de controle de
+// veículos - quando VALOR está preenchido mas REEMBOLSO ainda está vazio
+// (ou zero), o serviço ainda não foi cobrado do cliente/locatária.
+
+// Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
+const ROTINA_ATUAL = 'historico_manutencoes';
+
+let editandoId = null;
+let veiculoSelecionadoId = null;
+
+// Preenche o <select> de veículos, mostrando Placa - Fabricante Modelo
+// (mesmo padrão de atividades.js/manutencao.js).
+async function carregarVeiculos(){
+
+    const {data, error} = await supabaseClient
+        .from('veiculos')
+        .select('id,placa,fabricante,modelo')
+        .order('placa');
+
+    if(error){
+        alert(error.message);
+        return;
+    }
+
+    const select = document.getElementById('veiculoId');
+    const valorAtual = select.value;
+
+    let html = '<option value="" selected disabled>Selecione o veículo</option>';
+
+    (data || []).forEach(v => {
+        const rotulo = [v.placa, [v.fabricante, v.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ');
+        html += `<option value="${v.id}">${rotulo}</option>`;
+    });
+
+    select.innerHTML = html;
+
+    if(valorAtual){
+        select.value = valorAtual;
+    }
+
+}
+
+function formatarMoeda(valor){
+    const numero = Number(valor) || 0;
+    return numero.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+}
+
+// Um lançamento fica "A COBRAR" quando tem valor lançado mas ainda não foi
+// marcado como reembolsado - mesma regra usada na planilha de controle.
+function estaACobrar(m){
+    const valor = Number(m.valor) || 0;
+    const reembolso = Number(m.reembolso) || 0;
+    return valor > 0 && reembolso <= 0;
+}
+
+async function carregar(){
+
+    await carregarVeiculos();
+
+    if(veiculoSelecionadoId){
+        document.getElementById('veiculoId').value = veiculoSelecionadoId;
+    }
+
+    await carregarHistorico();
+
+}
+
+// Chamado ao trocar o veículo selecionado no combo.
+async function aoTrocarVeiculo(){
+    veiculoSelecionadoId = document.getElementById('veiculoId').value;
+    cancelarEdicao();
+    await carregarHistorico();
+}
+
+async function carregarHistorico(){
+
+    const veiculoId = document.getElementById('veiculoId').value;
+    veiculoSelecionadoId = veiculoId || null;
+
+    const resumo = document.getElementById('resumoVeiculo');
+
+    if(!veiculoId){
+        document.getElementById('lista').innerHTML = '';
+        resumo.classList.add('d-none');
+        return;
+    }
+
+    const {data, error} = await supabaseClient
+        .from('manutencao_historico')
+        .select('*')
+        .eq('veiculo_id', veiculoId)
+        .order('data', {ascending: true});
+
+    if(error){
+        alert(error.message);
+        return;
+    }
+
+    let totalGasto = 0;
+    let totalPendente = 0;
+    let html = '';
+
+    (data || []).forEach(m => {
+
+        const valor = Number(m.valor) || 0;
+        totalGasto += valor;
+
+        const aCobrar = estaACobrar(m);
+        if(aCobrar){
+            totalPendente += valor;
+        }
+
+        const dataFmt = m.data ? new Date(m.data + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+        const alertaHtml = aCobrar
+            ? '<span class="badge text-bg-danger">&#9888; A COBRAR</span>'
+            : '';
+
+        html += `
+
+        <tr class="${aCobrar ? 'table-danger' : ''}">
+
+            <td>${dataFmt}</td>
+            <td>${m.local ?? ''}</td>
+            <td>${m.servico ?? ''}</td>
+            <td>${m.km ?? ''}</td>
+            <td>${m.valor !== null && m.valor !== undefined ? formatarMoeda(m.valor) : ''}</td>
+            <td>${m.forma_pagamento ?? ''}</td>
+            <td>${m.observacao ?? ''}</td>
+            <td>${m.troca_oleo_km ?? ''}</td>
+            <td>${m.troca_correia_km ?? ''}</td>
+            <td>${m.reembolso !== null && m.reembolso !== undefined ? formatarMoeda(m.reembolso) : ''}</td>
+            <td>${alertaHtml}</td>
+            <td>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary" title="Editar" onclick="editar(${m.id})"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="excluir(${m.id})"><i class="bi bi-trash"></i></button>
+                </div>
+            </td>
+
+        </tr>
+
+        `;
+
+    });
+
+    document.getElementById('lista').innerHTML = html;
+
+    document.getElementById('totalGasto').textContent = formatarMoeda(totalGasto);
+    document.getElementById('totalPendente').textContent = formatarMoeda(totalPendente);
+    resumo.classList.remove('d-none');
+
+}
+
+async function editar(id){
+
+    const {data, error} = await supabaseClient
+        .from('manutencao_historico')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if(error){
+        alert(error.message);
+        return;
+    }
+
+    editandoId = id;
+
+    document.getElementById('data').value = data.data ?? '';
+    document.getElementById('local').value = data.local ?? '';
+    document.getElementById('servico').value = data.servico ?? '';
+    document.getElementById('km').value = data.km ?? '';
+    document.getElementById('valor').value = data.valor ?? '';
+    document.getElementById('formaPagamento').value = data.forma_pagamento ?? '';
+    document.getElementById('observacao').value = data.observacao ?? '';
+    document.getElementById('trocaOleoKm').value = data.troca_oleo_km ?? '';
+    document.getElementById('trocaCorreiaKm').value = data.troca_correia_km ?? '';
+    document.getElementById('reembolso').value = data.reembolso ?? '';
+
+    document.getElementById('btnSalvar').textContent = 'Atualizar';
+    document.getElementById('btnCancelar').classList.remove('d-none');
+
+    document.getElementById('data').focus();
+
+}
+
+function cancelarEdicao(){
+
+    editandoId = null;
+
+    document.getElementById('data').value = '';
+    document.getElementById('local').value = '';
+    document.getElementById('servico').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('valor').value = '';
+    document.getElementById('formaPagamento').value = '';
+    document.getElementById('observacao').value = '';
+    document.getElementById('trocaOleoKm').value = '';
+    document.getElementById('trocaCorreiaKm').value = '';
+    document.getElementById('reembolso').value = '';
+
+    document.getElementById('btnSalvar').textContent = 'Salvar';
+    document.getElementById('btnCancelar').classList.add('d-none');
+
+}
+
+async function excluir(id){
+
+    if(!confirm(`Excluir este lançamento de manutenção #${id}? Essa ação não pode ser desfeita.`)){
+        return;
+    }
+
+    const {error} = await supabaseClient
+        .from('manutencao_historico')
+        .delete()
+        .eq('id', id);
+
+    if(error){
+        alert(error.message);
+        return;
+    }
+
+    if(editandoId === id){
+        cancelarEdicao();
+    }
+
+    carregarHistorico();
+
+}
+
+async function salvar(){
+
+    const veiculoId = document.getElementById('veiculoId').value;
+
+    if(!veiculoId){
+        alert('Selecione o veículo.');
+        return;
+    }
+
+    const data_ = document.getElementById('data').value;
+    const local = document.getElementById('local').value.trim();
+    const servico = document.getElementById('servico').value.trim();
+    const km = document.getElementById('km').value;
+    const valor = document.getElementById('valor').value;
+    const formaPagamento = document.getElementById('formaPagamento').value.trim();
+    const observacao = document.getElementById('observacao').value.trim();
+    const trocaOleoKm = document.getElementById('trocaOleoKm').value;
+    const trocaCorreiaKm = document.getElementById('trocaCorreiaKm').value;
+    const reembolso = document.getElementById('reembolso').value;
+
+    const dados = {
+        veiculo_id: Number(veiculoId),
+        data: data_ || null,
+        local: local || null,
+        servico: servico || null,
+        km: km ? Number(km) : null,
+        valor: valor !== '' ? Number(valor) : null,
+        forma_pagamento: formaPagamento || null,
+        observacao: observacao || null,
+        troca_oleo_km: trocaOleoKm ? Number(trocaOleoKm) : null,
+        troca_correia_km: trocaCorreiaKm ? Number(trocaCorreiaKm) : null,
+        reembolso: reembolso !== '' ? Number(reembolso) : null
+    };
+
+    let error;
+
+    if(editandoId){
+
+        ({error} = await supabaseClient
+            .from('manutencao_historico')
+            .update(dados)
+            .eq('id', editandoId));
+
+    } else {
+
+        ({error} = await supabaseClient
+            .from('manutencao_historico')
+            .insert(dados));
+
+    }
+
+    if(error){
+        alert(error.message);
+        return;
+    }
+
+    cancelarEdicao();
+
+    carregarHistorico();
+
+}
+
+checarLogin();

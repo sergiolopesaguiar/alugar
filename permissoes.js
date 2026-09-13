@@ -24,6 +24,7 @@ const ROTINAS = [
     {codigo: 'condutor', label: 'Condutor'},
     {codigo: 'contratos', label: 'Contratos'},
     {codigo: 'manutencao', label: 'Manutenção'},
+    {codigo: 'historico_manutencoes', label: 'Veículos > Histórico de Manutenções'},
     {codigo: 'relatorio_inventario_veiculos', label: 'Relatórios > Inventário de Veículos'},
     {codigo: 'relatorio_veiculos', label: 'Relatórios > Veículos'},
     {codigo: 'relatorio_faturamento', label: 'Relatórios > Faturamento'},
