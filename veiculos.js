@@ -110,6 +110,7 @@ async function editar(id){
     document.getElementById("modelo").value = data.modelo ?? '';
     document.getElementById("cor").value = data.cor ?? '';
     document.getElementById("ano").value = data.ano ?? '';
+    document.getElementById("motor").value = data.motor ?? '';
     document.getElementById("chassi").value = data.chassi ?? '';
     document.getElementById("renavam").value = data.renavam ?? '';
     document.getElementById("cod_fipe").value = data.cod_fipe ?? '';
@@ -140,6 +141,7 @@ function cancelarEdicao(){
     document.getElementById("modelo").value='';
     document.getElementById("cor").value='';
     document.getElementById("ano").value='';
+    document.getElementById("motor").value='';
     document.getElementById("chassi").value='';
     document.getElementById("renavam").value='';
     document.getElementById("cod_fipe").value='';
@@ -203,6 +205,8 @@ async function salvar(){
 
     const anoValor=document.getElementById("ano").value;
 
+    const motor=document.getElementById("motor").value;
+
     const chassi=document.getElementById("chassi").value;
     const renavam=document.getElementById("renavam").value;
     const codFipe=document.getElementById("cod_fipe").value;
@@ -231,6 +235,8 @@ async function salvar(){
         cor,
 
         ano: anoValor ? Number(anoValor) : null,
+
+        motor: motor || null,
 
         chassi: chassi || null,
 

@@ -9,6 +9,11 @@
 // reembolso. Ao criar um lançamento novo o checkbox já vem marcado (mesmo
 // critério de antes, como sugestão), mas o usuário pode marcar ou
 // desmarcar livremente, tanto ao criar quanto ao editar.
+//
+// Ao lado do combo de veículo (placa), mostramos Renavam/Ano/Motor do
+// veículo selecionado (tabela veiculos - motor é um campo de texto livre,
+// preenchido em Veículos). São só exibição aqui, não fazem parte do
+// lançamento de manutenção.
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'historico_manutencoes';
@@ -16,13 +21,17 @@ const ROTINA_ATUAL = 'historico_manutencoes';
 let editandoId = null;
 let veiculoSelecionadoId = null;
 
+// Dados (renavam/ano/motor) de cada veículo, indexados por id, para exibir
+// ao lado da placa sem precisar buscar de novo a cada troca de veículo.
+let veiculosInfo = {};
+
 // Preenche o <select> de veículos, mostrando Placa - Fabricante Modelo
 // (mesmo padrão de atividades.js/manutencao.js).
 async function carregarVeiculos(){
 
     const {data, error} = await supabaseClient
         .from('veiculos')
-        .select('id,placa,fabricante,modelo')
+        .select('id,placa,fabricante,modelo,renavam,ano,motor')
         .order('placa');
 
     if(error){
@@ -35,9 +44,12 @@ async function carregarVeiculos(){
 
     let html = '<option value="" selected disabled>Selecione o veículo</option>';
 
+    veiculosInfo = {};
+
     (data || []).forEach(v => {
         const rotulo = [v.placa, [v.fabricante, v.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ');
         html += `<option value="${v.id}">${rotulo}</option>`;
+        veiculosInfo[v.id] = {renavam: v.renavam, ano: v.ano, motor: v.motor};
     });
 
     select.innerHTML = html;
@@ -46,6 +58,14 @@ async function carregarVeiculos(){
         select.value = valorAtual;
     }
 
+}
+
+// Mostra Renavam/Ano/Motor do veículo selecionado ao lado da placa.
+function atualizarInfoVeiculo(veiculoId){
+    const info = veiculosInfo[veiculoId] || {};
+    document.getElementById('infoRenavam').textContent = info.renavam || '-';
+    document.getElementById('infoAno').textContent = info.ano || '-';
+    document.getElementById('infoMotor').textContent = info.motor || '-';
 }
 
 function formatarMoeda(valor){
@@ -81,6 +101,8 @@ async function carregarHistorico(){
 
     const veiculoId = document.getElementById('veiculoId').value;
     veiculoSelecionadoId = veiculoId || null;
+
+    atualizarInfoVeiculo(veiculoId);
 
     const resumo = document.getElementById('resumoVeiculo');
 
