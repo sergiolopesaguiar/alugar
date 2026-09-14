@@ -14,6 +14,17 @@
 // veículo selecionado (tabela veiculos - motor é um campo de texto livre,
 // preenchido em Veículos). São só exibição aqui, não fazem parte do
 // lançamento de manutenção.
+//
+// Botão principal do formulário: "Incluir Serviço" quando não está
+// editando (insere um lançamento novo) e "Atualizar" quando está editando
+// um lançamento existente (editandoId preenchido).
+//
+// Confirmações de segurança:
+// - Atualizar (editar um lançamento existente): pede confirmação simples
+//   antes de gravar, para evitar atualização/perda de dados sem querer.
+// - Excluir: pede uma senha (0777) antes de apagar - não é criptografia
+//   nem controle de acesso real, só uma trava extra contra clique
+//   acidental no ícone de lixeira.
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'historico_manutencoes';
@@ -228,14 +239,27 @@ function cancelarEdicao(){
     document.getElementById('reembolso').value = '';
     document.getElementById('aCobrar').checked = true;
 
-    document.getElementById('btnSalvar').textContent = 'Salvar';
+    document.getElementById('btnSalvar').textContent = 'Incluir Serviço';
     document.getElementById('btnCancelar').classList.add('d-none');
 
 }
 
+// Exclusão exige a senha "0777" digitada na hora, além da confirmação -
+// evita apagar um lançamento sem querer ao clicar no ícone de lixeira.
 async function excluir(id){
 
-    if(!confirm(`Excluir este lançamento de manutenção #${id}? Essa ação não pode ser desfeita.`)){
+    const senha = prompt(`Para excluir o lançamento de manutenção #${id}, digite a senha de confirmação:`);
+
+    if(senha === null){
+        return;
+    }
+
+    if(senha !== '0777'){
+        alert('Senha incorreta. Exclusão cancelada.');
+        return;
+    }
+
+    if(!confirm(`Confirma a exclusão deste lançamento de manutenção #${id}? Essa ação não pode ser desfeita.`)){
         return;
     }
 
@@ -296,6 +320,10 @@ async function salvar(){
     let error;
 
     if(editandoId){
+
+        if(!confirm('Confirma a atualização deste lançamento de manutenção?')){
+            return;
+        }
 
         ({error} = await supabaseClient
             .from('manutencao_historico')
