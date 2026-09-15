@@ -28,15 +28,18 @@
 
 //
 // Alerta automático de manutenção (verificarNecessidadeManutencao):
-// logo após INSERIR um lançamento novo com KM informado, comparamos esse
-// KM com a última troca de óleo (troca_oleo_km) já registrada antes para
-// o veículo. Se a diferença passar de 9000km, o veículo precisa de
-// manutenção: criamos automaticamente uma atividade "AGENDAR OFICINA"
-// (status "Pendente", data_previsao = hoje) na tabela atividades, vinculada
-// ao veículo e ao condutor atual (condutores.veiculo_id com data_fim nula).
-// Não dispara ao editar um lançamento existente, só ao incluir um novo, e
-// não duplica se já existir uma atividade "AGENDAR OFICINA" pendente para
-// o veículo.
+// logo após INSERIR um lançamento novo com KM informado, comparamos o KM
+// do último lançamento do veículo pela DATA mais recente com o
+// troca_oleo_km do último lançamento que registrou troca de óleo, também
+// pela data mais recente (não pelo maior KM/troca_oleo_km, nem
+// necessariamente o lançamento que acabou de ser inserido - reflete o
+// estado mais atual do veículo mesmo com lançamentos fora de ordem). Se a
+// diferença passar de 9000km, o veículo precisa de manutenção: criamos
+// automaticamente uma atividade "AGENDAR OFICINA" (status "Pendente",
+// data_previsao = hoje) na tabela atividades, vinculada ao veículo e ao
+// condutor atual (condutores.veiculo_id com data_fim nula). Não dispara ao
+// editar um lançamento existente, só ao incluir um novo, e não duplica se
+// já existir uma atividade "AGENDAR OFICINA" pendente para o veículo.
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'historico_manutencoes';
@@ -294,33 +297,50 @@ async function excluir(id){
 }
 
 // Após inserir um novo lançamento de manutenção com KM informado, verifica
-// se este KM já passou de 9000km em relação à última troca de óleo
-// registrada anteriormente para o veículo. Se sim, o veículo precisa de
-// manutenção: criamos automaticamente uma atividade "AGENDAR OFICINA"
+// se o KM do último lançamento (pela data mais recente) já passou de
+// 9000km em relação à troca de óleo do último lançamento que registrou
+// troca de óleo (também pela data mais recente). Se sim, o veículo precisa
+// de manutenção: criamos automaticamente uma atividade "AGENDAR OFICINA"
 // pendente na tabela atividades, vinculada ao veículo e ao condutor atual.
-async function verificarNecessidadeManutencao(veiculoId, kmAtual, idInserido){
+//
+// Importante: os dois valores são sempre buscados pela DATA mais recente
+// de cada lançamento (não pelo maior KM, nem pelo lançamento que acabou de
+// ser inserido) - assim a checagem reflete o estado real e mais atual do
+// veículo, mesmo que o usuário tenha cadastrado lançamentos fora de ordem
+// ou editado um lançamento antigo depois.
+async function verificarNecessidadeManutencao(veiculoId){
 
-    if(!kmAtual){
+    // Último KM informado para este veículo, pela data mais recente.
+    const {data: ultimoComKm, error: erroKm} = await supabaseClient
+        .from('manutencao_historico')
+        .select('km')
+        .eq('veiculo_id', veiculoId)
+        .not('km', 'is', null)
+        .order('data', {ascending: false})
+        .order('id', {ascending: false})
+        .limit(1);
+
+    if(erroKm || !ultimoComKm || !ultimoComKm.length){
         return;
     }
 
-    // Última troca de óleo conhecida para este veículo (maior troca_oleo_km
-    // já registrado), ignorando o lançamento que acabou de ser inserido -
-    // se ele próprio marcou uma troca de óleo agora, não há atraso.
-    const {data: historico, error: erroHistorico} = await supabaseClient
+    const kmAtual = ultimoComKm[0].km;
+
+    // Última troca de óleo conhecida para este veículo, pela data mais recente.
+    const {data: ultimaTroca, error: erroTroca} = await supabaseClient
         .from('manutencao_historico')
         .select('troca_oleo_km')
         .eq('veiculo_id', veiculoId)
         .not('troca_oleo_km', 'is', null)
-        .neq('id', idInserido)
-        .order('troca_oleo_km', {ascending: false})
+        .order('data', {ascending: false})
+        .order('id', {ascending: false})
         .limit(1);
 
-    if(erroHistorico || !historico || !historico.length){
+    if(erroTroca || !ultimaTroca || !ultimaTroca.length){
         return;
     }
 
-    const ultimaTrocaOleoKm = historico[0].troca_oleo_km;
+    const ultimaTrocaOleoKm = ultimaTroca[0].troca_oleo_km;
 
     if((kmAtual - ultimaTrocaOleoKm) <= 9000){
         return;
@@ -433,8 +453,8 @@ async function salvar(){
 
         error = resultado.error;
 
-        if(!error && dados.km && resultado.data){
-            await verificarNecessidadeManutencao(dados.veiculo_id, dados.km, resultado.data.id);
+        if(!error && dados.km){
+            await verificarNecessidadeManutencao(dados.veiculo_id);
         }
 
     }
