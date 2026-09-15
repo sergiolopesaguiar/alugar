@@ -27,16 +27,21 @@
 //   acidental no ícone de lixeira.
 
 //
-// Alerta automático de manutenção (verificarNecessidadeManutencao):
+// Alertas automáticos de manutenção (verificarNecessidadeManutencao e
+// verificarNecessidadeManutencaoCorreia):
 // logo após INSERIR um lançamento novo com KM informado, comparamos esse
-// KM com o maior troca_oleo_km já registrado para o veículo (excluindo o
-// próprio lançamento recém-inserido). Se a diferença passar de 9000km, o
-// veículo precisa de manutenção: criamos automaticamente uma atividade
-// "AGENDAR OFICINA" (status "Pendente", data_previsao = hoje) na tabela
-// atividades, vinculada ao veículo e ao condutor atual (condutores.veiculo_id
-// com data_fim nula). Não dispara ao editar um lançamento existente, só ao
-// incluir um novo, e não duplica se já existir uma atividade "AGENDAR
-// OFICINA" pendente para o veículo.
+// KM com o maior troca_oleo_km / troca_correia_km já registrado para o
+// veículo (excluindo o próprio lançamento recém-inserido). Se a diferença
+// passar de 9000km (óleo) ou 50000km (correia dentada), o veículo precisa
+// de manutenção: criamos automaticamente uma atividade "AGENDAR OFICINA"
+// (status "Pendente", data_previsao = hoje, observacao identificando qual
+// manutenção) na tabela atividades, vinculada ao veículo e ao condutor
+// atual (condutores.veiculo_id com data_fim nula). Não dispara ao editar
+// um lançamento existente, só ao incluir um novo, e não duplica se já
+// existir uma atividade "AGENDAR OFICINA" pendente com a mesma observacao
+// para o veículo (a checagem de duplicidade é por observacao, não só por
+// tipo_atividade, para que um alerta de óleo pendente não impeça a criação
+// de um alerta de correia dentada para o mesmo veículo, e vice-versa).
 
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'historico_manutencoes';
@@ -326,14 +331,17 @@ async function verificarNecessidadeManutencao(veiculoId, kmAtual, idInserido){
         return;
     }
 
-    // Evita duplicar: se já existe uma atividade "AGENDAR OFICINA"
-    // pendente para este veículo, não cria outra a cada novo lançamento.
+    // Evita duplicar: se já existe uma atividade "AGENDAR OFICINA" pendente
+    // para este veículo com a mesma observacao (TROCA DE OLEO), não cria
+    // outra a cada novo lançamento. A checagem é por observacao (não só
+    // tipo_atividade) para não bloquear o alerta de correia dentada.
     const {data: pendentes} = await supabaseClient
         .from('atividades')
         .select('id')
         .eq('veiculo_id', veiculoId)
         .eq('tipo_atividade', 'AGENDAR OFICINA')
         .eq('status', 'Pendente')
+        .eq('observacao', 'TROCA DE OLEO')
         .limit(1);
 
     if(pendentes && pendentes.length){
@@ -372,6 +380,92 @@ async function verificarNecessidadeManutencao(veiculoId, kmAtual, idInserido){
     }
 
     alert('Atenção: este veículo já rodou mais de 9.000km desde a última troca de óleo. Uma atividade "AGENDAR OFICINA" foi criada automaticamente na tela de Atividades.');
+
+}
+
+// Após inserir um novo lançamento de manutenção com KM informado, verifica
+// se esse KM já passou de 50000km em relação à última troca de correia
+// dentada (troca_correia_km) já registrada para o veículo. Se sim, o
+// veículo precisa de manutenção: criamos automaticamente uma atividade
+// "AGENDAR OFICINA" pendente na tabela atividades, vinculada ao veículo e
+// ao condutor atual. Mesmo padrão de verificarNecessidadeManutencao (óleo),
+// mas com o limite e a observacao específicos da correia dentada.
+async function verificarNecessidadeManutencaoCorreia(veiculoId, kmAtual, idInserido){
+
+    if(!kmAtual){
+        return;
+    }
+
+    // Maior troca_correia_km já registrada para o veículo, excluindo o
+    // lançamento que acabou de ser inserido (para não comparar uma troca
+    // de correia feita agora contra o próprio KM atual).
+    const {data: historico, error: erroHistorico} = await supabaseClient
+        .from('manutencao_historico')
+        .select('troca_correia_km')
+        .eq('veiculo_id', veiculoId)
+        .not('troca_correia_km', 'is', null)
+        .neq('id', idInserido)
+        .order('troca_correia_km', {ascending: false})
+        .limit(1);
+
+    if(erroHistorico || !historico || !historico.length){
+        return;
+    }
+
+    const ultimaTrocaCorreiaKm = historico[0].troca_correia_km;
+
+    if((kmAtual - ultimaTrocaCorreiaKm) <= 50000){
+        return;
+    }
+
+    // Evita duplicar: se já existe uma atividade "AGENDAR OFICINA" pendente
+    // para este veículo com a mesma observacao (TROCA DA CORREIA DENTADA),
+    // não cria outra a cada novo lançamento.
+    const {data: pendentes} = await supabaseClient
+        .from('atividades')
+        .select('id')
+        .eq('veiculo_id', veiculoId)
+        .eq('tipo_atividade', 'AGENDAR OFICINA')
+        .eq('status', 'Pendente')
+        .eq('observacao', 'TROCA DA CORREIA DENTADA')
+        .limit(1);
+
+    if(pendentes && pendentes.length){
+        return;
+    }
+
+    // Condutor atual do veículo: registro em condutores sem data_fim
+    // preenchida (o mais recente pela data_inicio, caso haja mais de um).
+    const {data: condutorAtual} = await supabaseClient
+        .from('condutores')
+        .select('id')
+        .eq('veiculo_id', veiculoId)
+        .is('data_fim', null)
+        .order('data_inicio', {ascending: false})
+        .limit(1);
+
+    const condutorId = (condutorAtual && condutorAtual.length) ? condutorAtual[0].id : null;
+
+    const hoje = new Date().toISOString().slice(0, 10);
+
+    const {error: erroAtividade} = await supabaseClient
+        .from('atividades')
+        .insert({
+            veiculo_id: Number(veiculoId),
+            condutor_id: condutorId,
+            tipo_atividade: 'AGENDAR OFICINA',
+            data_previsao: hoje,
+            status: 'Pendente',
+            km: kmAtual,
+            observacao: 'TROCA DA CORREIA DENTADA'
+        });
+
+    if(erroAtividade){
+        alert('Este veículo precisa de manutenção (mais de 50.000km desde a última troca de correia dentada), mas houve um erro ao criar a atividade automática: ' + erroAtividade.message);
+        return;
+    }
+
+    alert('Atenção: este veículo já rodou mais de 50.000km desde a última troca de correia dentada. Uma atividade "AGENDAR OFICINA" foi criada automaticamente na tela de Atividades.');
 
 }
 
@@ -436,6 +530,7 @@ async function salvar(){
 
         if(!error && dados.km && resultado.data){
             await verificarNecessidadeManutencao(dados.veiculo_id, dados.km, resultado.data.id);
+            await verificarNecessidadeManutencaoCorreia(dados.veiculo_id, dados.km, resultado.data.id);
         }
 
     }
