@@ -127,7 +127,7 @@ async function carregarHistorico(){
         .from('manutencao_historico')
         .select('*')
         .eq('veiculo_id', veiculoId)
-        .order('data', {ascending: true});
+        .order('data', {ascending: false});
 
     if(error){
         alert(error.message);
