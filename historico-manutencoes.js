@@ -26,6 +26,18 @@
 //   nem controle de acesso real, só uma trava extra contra clique
 //   acidental no ícone de lixeira.
 
+//
+// Alerta automático de manutenção (verificarNecessidadeManutencao):
+// logo após INSERIR um lançamento novo com KM informado, comparamos esse
+// KM com a última troca de óleo (troca_oleo_km) já registrada antes para
+// o veículo. Se a diferença passar de 9000km, o veículo precisa de
+// manutenção: criamos automaticamente uma atividade "AGENDAR OFICINA"
+// (status "Pendente", data_previsao = hoje) na tabela atividades, vinculada
+// ao veículo e ao condutor atual (condutores.veiculo_id com data_fim nula).
+// Não dispara ao editar um lançamento existente, só ao incluir um novo, e
+// não duplica se já existir uma atividade "AGENDAR OFICINA" pendente para
+// o veículo.
+
 // Identifica esta página para o sistema de permissões (usuarios_rotinas) em auth.js.
 const ROTINA_ATUAL = 'historico_manutencoes';
 
@@ -281,6 +293,87 @@ async function excluir(id){
 
 }
 
+// Após inserir um novo lançamento de manutenção com KM informado, verifica
+// se este KM já passou de 9000km em relação à última troca de óleo
+// registrada anteriormente para o veículo. Se sim, o veículo precisa de
+// manutenção: criamos automaticamente uma atividade "AGENDAR OFICINA"
+// pendente na tabela atividades, vinculada ao veículo e ao condutor atual.
+async function verificarNecessidadeManutencao(veiculoId, kmAtual, idInserido){
+
+    if(!kmAtual){
+        return;
+    }
+
+    // Última troca de óleo conhecida para este veículo (maior troca_oleo_km
+    // já registrado), ignorando o lançamento que acabou de ser inserido -
+    // se ele próprio marcou uma troca de óleo agora, não há atraso.
+    const {data: historico, error: erroHistorico} = await supabaseClient
+        .from('manutencao_historico')
+        .select('troca_oleo_km')
+        .eq('veiculo_id', veiculoId)
+        .not('troca_oleo_km', 'is', null)
+        .neq('id', idInserido)
+        .order('troca_oleo_km', {ascending: false})
+        .limit(1);
+
+    if(erroHistorico || !historico || !historico.length){
+        return;
+    }
+
+    const ultimaTrocaOleoKm = historico[0].troca_oleo_km;
+
+    if((kmAtual - ultimaTrocaOleoKm) <= 9000){
+        return;
+    }
+
+    // Evita duplicar: se já existe uma atividade "AGENDAR OFICINA"
+    // pendente para este veículo, não cria outra a cada novo lançamento.
+    const {data: pendentes} = await supabaseClient
+        .from('atividades')
+        .select('id')
+        .eq('veiculo_id', veiculoId)
+        .eq('tipo_atividade', 'AGENDAR OFICINA')
+        .eq('status', 'Pendente')
+        .limit(1);
+
+    if(pendentes && pendentes.length){
+        return;
+    }
+
+    // Condutor atual do veículo: registro em condutores sem data_fim
+    // preenchida (o mais recente pela data_inicio, caso haja mais de um).
+    const {data: condutorAtual} = await supabaseClient
+        .from('condutores')
+        .select('id')
+        .eq('veiculo_id', veiculoId)
+        .is('data_fim', null)
+        .order('data_inicio', {ascending: false})
+        .limit(1);
+
+    const condutorId = (condutorAtual && condutorAtual.length) ? condutorAtual[0].id : null;
+
+    const hoje = new Date().toISOString().slice(0, 10);
+
+    const {error: erroAtividade} = await supabaseClient
+        .from('atividades')
+        .insert({
+            veiculo_id: Number(veiculoId),
+            condutor_id: condutorId,
+            tipo_atividade: 'AGENDAR OFICINA',
+            data_previsao: hoje,
+            status: 'Pendente',
+            km: kmAtual
+        });
+
+    if(erroAtividade){
+        alert('Este veículo precisa de manutenção (mais de 9.000km desde a última troca de óleo), mas houve um erro ao criar a atividade automática: ' + erroAtividade.message);
+        return;
+    }
+
+    alert('Atenção: este veículo já rodou mais de 9.000km desde a última troca de óleo. Uma atividade "AGENDAR OFICINA" foi criada automaticamente na tela de Atividades.');
+
+}
+
 async function salvar(){
 
     const veiculoId = document.getElementById('veiculoId').value;
@@ -332,9 +425,17 @@ async function salvar(){
 
     } else {
 
-        ({error} = await supabaseClient
+        const resultado = await supabaseClient
             .from('manutencao_historico')
-            .insert(dados));
+            .insert(dados)
+            .select('id')
+            .single();
+
+        error = resultado.error;
+
+        if(!error && dados.km && resultado.data){
+            await verificarNecessidadeManutencao(dados.veiculo_id, dados.km, resultado.data.id);
+        }
 
     }
 
