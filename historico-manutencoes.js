@@ -362,7 +362,8 @@ async function verificarNecessidadeManutencao(veiculoId, kmAtual, idInserido){
             tipo_atividade: 'AGENDAR OFICINA',
             data_previsao: hoje,
             status: 'Pendente',
-            km: kmAtual
+            km: kmAtual,
+            observacao: 'TROCA DE OLEO'
         });
 
     if(erroAtividade){
