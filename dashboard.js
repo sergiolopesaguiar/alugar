@@ -13,7 +13,7 @@ async function carregar(){
     const {data, error} = await supabaseClient
         .from('atividades')
         .select('*, veiculos(placa, fabricante, modelo), condutores(nome)')
-        .order('id');
+        .order('data_previsao', {ascending: false});
 
     if(error){
         alert(error.message);
