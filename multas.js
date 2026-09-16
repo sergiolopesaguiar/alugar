@@ -21,8 +21,8 @@ const ROTINA_ATUAL = 'multas';
 let editandoId = null;
 
 // Cache dos veículos carregados (id, placa, fabricante, modelo, renavam), usado
-// por atualizarDadosVeiculo() para preencher os campos somente-leitura "Placa"
-// e "Renavam" sem precisar consultar o banco de novo a cada troca do select.
+// por atualizarRenavamFiltro() para preencher o campo somente-leitura "Renavam"
+// (ao lado do filtro por placa) sem precisar consultar o banco de novo.
 let veiculosCache = [];
 
 // Cache da última lista de multas carregada do banco (com o join de veiculos),
@@ -61,21 +61,6 @@ async function carregarVeiculos(){
     if(valorAtual){
         select.value = valorAtual;
     }
-
-    atualizarDadosVeiculo();
-
-}
-
-// Preenche os campos somente-leitura "Placa" e "Renavam" com os dados do
-// veículo selecionado no momento (chamado ao trocar o select e ao editar
-// uma multa existente).
-function atualizarDadosVeiculo(){
-
-    const veiculoId = document.getElementById('veiculoId').value;
-    const veiculo = veiculosCache.find(v => String(v.id) === String(veiculoId));
-
-    document.getElementById('placaVeiculo').value = veiculo?.placa ?? '';
-    document.getElementById('renavamVeiculo').value = veiculo?.renavam ?? '';
 
 }
 
@@ -129,7 +114,9 @@ function popularFiltroPlaca(){
 }
 
 // Reexibe a tabela a partir de multasCache, aplicando o filtro por placa
-// selecionado (ou a lista inteira, se nenhuma placa estiver selecionada).
+// selecionado (ou a lista inteira, se nenhuma placa estiver selecionada), e
+// atualiza o campo "Renavam" ao lado do filtro com o renavam do veículo
+// filtrado.
 function filtrarPorPlaca(){
 
     const placaFiltro = document.getElementById('filtroPlaca').value;
@@ -139,6 +126,18 @@ function filtrarPorPlaca(){
         : multasCache;
 
     renderizarLista(lista);
+    atualizarRenavamFiltro(placaFiltro);
+
+}
+
+// Preenche o campo somente-leitura "Renavam" (ao lado do filtro por placa)
+// com o renavam do veículo cuja placa está selecionada no filtro; limpa o
+// campo se nenhuma placa estiver selecionada.
+function atualizarRenavamFiltro(placa){
+
+    const veiculo = veiculosCache.find(v => v.placa === placa);
+
+    document.getElementById('renavamFiltro').value = veiculo?.renavam ?? '';
 
 }
 
@@ -204,7 +203,6 @@ async function editar(id){
     editandoId = id;
 
     document.getElementById("veiculoId").value = data.veiculo_id ?? '';
-    atualizarDadosVeiculo();
     document.getElementById("infracao").value = data.numero_auto ?? '';
     document.getElementById("valor").value = data.valor ?? '';
     document.getElementById("dataInfracao").value = data.data_infracao ?? '';
@@ -227,7 +225,6 @@ function cancelarEdicao(){
     editandoId = null;
 
     document.getElementById("veiculoId").value = '';
-    atualizarDadosVeiculo();
     document.getElementById("infracao").value = '';
     document.getElementById("valor").value = '';
     document.getElementById("dataInfracao").value = '';
