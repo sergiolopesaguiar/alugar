@@ -25,6 +25,11 @@ let editandoId = null;
 // e "Renavam" sem precisar consultar o banco de novo a cada troca do select.
 let veiculosCache = [];
 
+// Cache da última lista de multas carregada do banco (com o join de veiculos),
+// usado pelo filtro por placa para reexibir a lista sem precisar consultar o
+// banco de novo a cada troca do filtro.
+let multasCache = [];
+
 // Preenche o <select> de veículos, mostrando Placa - Fabricante Modelo.
 // (mesma função usada em atividades.js, com o acréscimo do renavam)
 async function carregarVeiculos(){
@@ -88,9 +93,60 @@ async function carregar(){
         return;
     }
 
+    multasCache = data || [];
+
+    popularFiltroPlaca();
+    filtrarPorPlaca();
+
+}
+
+// Preenche o <select> do filtro por placa com as placas distintas presentes
+// na lista de multas carregada (multasCache), em ordem alfabética, mantendo a
+// seleção atual (se ainda existir na nova lista).
+function popularFiltroPlaca(){
+
+    const select = document.getElementById('filtroPlaca');
+    const valorAtual = select.value;
+
+    const placas = [...new Set(
+        multasCache
+            .map(m => m.veiculos?.placa)
+            .filter(Boolean)
+    )].sort();
+
+    let html = '<option value="">(Todas as placas)</option>';
+
+    placas.forEach(placa => {
+        html += `<option value="${placa}">${placa}</option>`;
+    });
+
+    select.innerHTML = html;
+
+    if(placas.includes(valorAtual)){
+        select.value = valorAtual;
+    }
+
+}
+
+// Reexibe a tabela a partir de multasCache, aplicando o filtro por placa
+// selecionado (ou a lista inteira, se nenhuma placa estiver selecionada).
+function filtrarPorPlaca(){
+
+    const placaFiltro = document.getElementById('filtroPlaca').value;
+
+    const lista = placaFiltro
+        ? multasCache.filter(m => m.veiculos?.placa === placaFiltro)
+        : multasCache;
+
+    renderizarLista(lista);
+
+}
+
+function renderizarLista(lista){
+
     let html = '';
 
-    (data || []).forEach(m => {
+    (lista || []).forEach(m => {
 
         const veiculo = m.veiculos
             ? [m.veiculos.placa, [m.veiculos.fabricante, m.veiculos.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ')
