@@ -20,13 +20,18 @@ const ROTINA_ATUAL = 'multas';
 
 let editandoId = null;
 
+// Cache dos veículos carregados (id, placa, fabricante, modelo, renavam), usado
+// por atualizarDadosVeiculo() para preencher os campos somente-leitura "Placa"
+// e "Renavam" sem precisar consultar o banco de novo a cada troca do select.
+let veiculosCache = [];
+
 // Preenche o <select> de veículos, mostrando Placa - Fabricante Modelo.
-// (mesma função usada em atividades.js)
+// (mesma função usada em atividades.js, com o acréscimo do renavam)
 async function carregarVeiculos(){
 
     const {data, error} = await supabaseClient
         .from('veiculos')
-        .select('id, placa, fabricante, modelo')
+        .select('id, placa, fabricante, modelo, renavam')
         .order('placa');
 
     const select = document.getElementById('veiculoId');
@@ -37,9 +42,11 @@ async function carregarVeiculos(){
         return;
     }
 
+    veiculosCache = data || [];
+
     let html = '<option value="" selected disabled>Selecione o veículo</option>';
 
-    (data || []).forEach(v => {
+    veiculosCache.forEach(v => {
         const rotulo = [v.placa, [v.fabricante, v.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ');
         html += `<option value="${v.id}">${rotulo}</option>`;
     });
@@ -49,6 +56,21 @@ async function carregarVeiculos(){
     if(valorAtual){
         select.value = valorAtual;
     }
+
+    atualizarDadosVeiculo();
+
+}
+
+// Preenche os campos somente-leitura "Placa" e "Renavam" com os dados do
+// veículo selecionado no momento (chamado ao trocar o select e ao editar
+// uma multa existente).
+function atualizarDadosVeiculo(){
+
+    const veiculoId = document.getElementById('veiculoId').value;
+    const veiculo = veiculosCache.find(v => String(v.id) === String(veiculoId));
+
+    document.getElementById('placaVeiculo').value = veiculo?.placa ?? '';
+    document.getElementById('renavamVeiculo').value = veiculo?.renavam ?? '';
 
 }
 
@@ -126,6 +148,7 @@ async function editar(id){
     editandoId = id;
 
     document.getElementById("veiculoId").value = data.veiculo_id ?? '';
+    atualizarDadosVeiculo();
     document.getElementById("infracao").value = data.numero_auto ?? '';
     document.getElementById("valor").value = data.valor ?? '';
     document.getElementById("dataInfracao").value = data.data_infracao ?? '';
@@ -148,6 +171,7 @@ function cancelarEdicao(){
     editandoId = null;
 
     document.getElementById("veiculoId").value = '';
+    atualizarDadosVeiculo();
     document.getElementById("infracao").value = '';
     document.getElementById("valor").value = '';
     document.getElementById("dataInfracao").value = '';
