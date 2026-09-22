@@ -27,6 +27,10 @@ async function carregar(){
     let concluidas = 0;
     let atrasadas = 0;
 
+    // A lista abaixo dos cards é somente leitura e serve para dar visibilidade
+    // rápida do que ainda precisa de atenção - por isso só mostra atividades
+    // não concluídas. Os cards (Total, Pendentes, Concluídas, Atrasadas)
+    // continuam contando TODAS as atividades, concluídas inclusive.
     let html = '';
 
     (data || []).forEach(a => {
@@ -34,8 +38,9 @@ async function carregar(){
         total++;
 
         const status = a.status ?? 'Pendente';
+        const concluida = status === 'Concluída';
 
-        if(status === 'Concluída'){
+        if(concluida){
             concluidas++;
         } else {
             pendentes++;
@@ -44,13 +49,17 @@ async function carregar(){
             }
         }
 
+        if(concluida){
+            return;
+        }
+
         const veiculo = a.veiculos
             ? [a.veiculos.placa, [a.veiculos.fabricante, a.veiculos.modelo].filter(Boolean).join(' ')].filter(Boolean).join(' - ')
             : '<span class="text-danger">(sem veículo)</span>';
 
         const condutor = a.condutores?.nome ?? '';
         const dataFmt = a.data_previsao ? new Date(a.data_previsao + 'T00:00:00').toLocaleDateString('pt-BR') : '';
-        const statusCor = status === 'Concluída' ? 'bg-success' : 'bg-warning text-dark';
+        const statusCor = 'bg-warning text-dark';
 
         html += `
         <tr>
