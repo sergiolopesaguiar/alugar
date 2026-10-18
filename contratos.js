@@ -25,6 +25,13 @@ let editandoId = null;
 let todosVeiculos = []; // {id, placa, modelo} - carregado uma vez
 let veiculosDoContrato = []; // ids dos veículos já adicionados ao contrato em edição/criação
 
+// Cada veículo de um contrato pode ter um valor mensal diferente (ex.: um
+// contrato com 17 carros, quase todos a R$2.850, mas um deles a R$4.600).
+// Por isso o valor não fica só no contrato (campo "valor", que vira o TOTAL),
+// mas também por veículo, na própria linha de contratos_veiculos. Mapa
+// veiculo_id -> número (ou null se ainda não preenchido).
+let valoresPorVeiculo = {};
+
 // Um veículo não pode estar em dois contratos ativos ao mesmo tempo. Contrato
 // ativo = data_final vazia OU data_final ainda não vencida (>= hoje). Este
 // Set guarda os ids de veículos já presos a um contrato ativo QUALQUER,
@@ -129,12 +136,40 @@ function atualizarComboVeiculos(){
 
 }
 
+// Soma os valores por veículo já preenchidos e replica no campo "Valor" do
+// contrato (que passa a representar o TOTAL). Só mexe no campo quando há
+// pelo menos um veículo na lista - contratos sem veículo nenhum continuam
+// com o valor totalmente manual, como antes.
+function sincronizarValorTotalContrato(){
+
+    const totalEl = document.getElementById('totalVeiculosContrato');
+
+    if(veiculosDoContrato.length === 0){
+        if(totalEl) totalEl.textContent = '';
+        return;
+    }
+
+    const soma = veiculosDoContrato.reduce((acc, id) => acc + (Number(valoresPorVeiculo[id]) || 0), 0);
+
+    document.getElementById('valor').value = soma.toFixed(2);
+
+    if(totalEl){
+        const faltando = veiculosDoContrato.filter(id => valoresPorVeiculo[id] == null || valoresPorVeiculo[id] === '').length;
+        const totalFmt = soma.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        totalEl.textContent = faltando > 0
+            ? `Total dos veículos: ${totalFmt} (${faltando} sem valor preenchido)`
+            : `Total dos veículos: ${totalFmt}`;
+    }
+
+}
+
 function renderizarVeiculosDoContrato(){
 
     const container = document.getElementById('listaVeiculosContrato');
 
     if(veiculosDoContrato.length === 0){
         container.innerHTML = '<p class="text-muted mb-0" id="mensagemSemVeiculos">Nenhum veículo adicionado ainda.</p>';
+        sincronizarValorTotalContrato();
         return;
     }
 
@@ -143,15 +178,31 @@ function renderizarVeiculosDoContrato(){
     veiculosDoContrato.forEach(id => {
         const v = todosVeiculos.find(item => item.id === id);
         const descricao = v ? descricaoVeiculo(v) : `#${id}`;
+        const valorAtual = valoresPorVeiculo[id] != null ? valoresPorVeiculo[id] : '';
         html += `
-        <div class="d-flex justify-content-between align-items-center py-1">
-            <span>${descricao}</span>
+        <div class="d-flex justify-content-between align-items-center gap-2 py-1">
+            <span class="flex-grow-1">${descricao}</span>
+            <div class="input-group input-group-sm" style="max-width:160px;">
+                <span class="input-group-text">R$</span>
+                <input type="number" step="0.01" class="form-control" placeholder="Valor" value="${valorAtual}"
+                    oninput="atualizarValorVeiculo(${id}, this.value)">
+            </div>
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerVeiculoDoContrato(${id})">Remover</button>
         </div>
         `;
     });
 
     container.innerHTML = html;
+
+    sincronizarValorTotalContrato();
+
+}
+
+function atualizarValorVeiculo(id, valorStr){
+
+    valoresPorVeiculo[id] = valorStr !== '' ? Number(valorStr) : null;
+
+    sincronizarValorTotalContrato();
 
 }
 
@@ -165,7 +216,18 @@ function adicionarVeiculoAoContrato(){
     }
 
     if(!veiculosDoContrato.includes(id)){
+
         veiculosDoContrato.push(id);
+
+        // Facilita o cadastro de contratos com muitos veículos no mesmo valor
+        // (caso comum): pré-preenche com o último valor digitado na lista.
+        const ultimoValor = [...veiculosDoContrato]
+            .reverse()
+            .map(vid => valoresPorVeiculo[vid])
+            .find(valor => valor != null);
+
+        valoresPorVeiculo[id] = ultimoValor != null ? ultimoValor : null;
+
     }
 
     atualizarComboVeiculos();
@@ -176,6 +238,8 @@ function adicionarVeiculoAoContrato(){
 function removerVeiculoDoContrato(id){
 
     veiculosDoContrato = veiculosDoContrato.filter(item => item !== id);
+
+    delete valoresPorVeiculo[id];
 
     atualizarComboVeiculos();
     renderizarVeiculosDoContrato();
@@ -241,7 +305,7 @@ async function editar(id){
 
     const {data, error} = await supabaseClient
         .from('contratos')
-        .select('*, contratos_veiculos(veiculo_id)')
+        .select('*, contratos_veiculos(veiculo_id, valor)')
         .eq('id', id)
         .single();
 
@@ -259,6 +323,11 @@ async function editar(id){
     document.getElementById("observacao").value = data.observacao ?? '';
 
     veiculosDoContrato = (data.contratos_veiculos || []).map(cv => cv.veiculo_id);
+
+    valoresPorVeiculo = {};
+    (data.contratos_veiculos || []).forEach(cv => {
+        valoresPorVeiculo[cv.veiculo_id] = cv.valor != null ? Number(cv.valor) : null;
+    });
 
     await carregarVeiculosBloqueados(editandoId);
 
@@ -283,6 +352,7 @@ async function cancelarEdicao(){
     document.getElementById("observacao").value = '';
 
     veiculosDoContrato = [];
+    valoresPorVeiculo = {};
 
     await carregarVeiculosBloqueados(null);
 
@@ -430,7 +500,11 @@ async function salvar(){
 
     if(idsSelecionados.length > 0){
 
-        const linhas = idsSelecionados.map(veiculo_id => ({contrato_id: contratoId, veiculo_id}));
+        const linhas = idsSelecionados.map(veiculo_id => ({
+            contrato_id: contratoId,
+            veiculo_id,
+            valor: valoresPorVeiculo[veiculo_id] != null ? valoresPorVeiculo[veiculo_id] : null
+        }));
 
         const {error: erroVinculo} = await supabaseClient
             .from('contratos_veiculos')
