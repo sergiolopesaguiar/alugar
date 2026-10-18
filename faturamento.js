@@ -232,7 +232,138 @@ document.addEventListener('DOMContentLoaded', () => {
     if(campoMes){
         campoMes.value = new Date().toISOString().slice(0, 7);
     }
+
+    const filtroPlaca = document.getElementById('filtroVeiculoPlaca');
+    if(filtroPlaca){
+        filtroPlaca.addEventListener('input', renderizarVeiculosFaturamento);
+    }
+
+    const filtroSituacao = document.getElementById('filtroVeiculoSituacao');
+    if(filtroSituacao){
+        filtroSituacao.addEventListener('change', renderizarVeiculosFaturamento);
+    }
 });
+
+// ---------------------------------------------------------------------
+// Seção "Veículos e Contratos" (pedido do Sérgio, baseado na planilha
+// CARROS_FATURAR.pdf): mostra TODOS os veículos da frota e, para cada um,
+// se está "Locado" (vinculado a um contrato vigente - sem data_final, ou
+// com data_final ainda não vencida) ou "Disponível". Serve para visualizar
+// de forma rápida quais veículos devem compor o faturamento do mês.
+// ---------------------------------------------------------------------
+
+let todosVeiculosFaturamento = []; // cache local para os filtros de placa/situação
+
+async function carregarVeiculosFaturamento(){
+
+    const {data: veiculos, error: errV} = await supabaseClient
+        .from('veiculos')
+        .select('id, placa, fabricante, modelo, status')
+        .order('placa');
+
+    if(errV){
+        document.getElementById('listaVeiculosFaturamento').innerHTML =
+            `<tr><td colspan="6" class="text-danger">Erro ao carregar veículos: ${errV.message}</td></tr>`;
+        return;
+    }
+
+    const {data: vinculos, error: errVinc} = await supabaseClient
+        .from('contratos_veiculos')
+        .select('veiculo_id, contratos(id, valor, data_inicial, data_final, clientes(nome))');
+
+    if(errVinc){
+        document.getElementById('listaVeiculosFaturamento').innerHTML =
+            `<tr><td colspan="6" class="text-danger">Erro ao carregar contratos: ${errVinc.message}</td></tr>`;
+        return;
+    }
+
+    const hojeStr = new Date().toISOString().slice(0, 10);
+
+    // Para cada veículo, guarda o contrato vigente (sem data_final, ou com
+    // data_final ainda não vencida). Se por algum motivo houver mais de um
+    // vínculo vigente para o mesmo veículo, fica com o contrato de id mais
+    // alto (o mais recente) - cenário que não deveria ocorrer em uso normal.
+    const contratoPorVeiculo = {};
+
+    (vinculos || []).forEach(v => {
+        const c = v.contratos;
+        if(!c) return;
+        const vigente = !c.data_final || c.data_final >= hojeStr;
+        if(!vigente) return;
+        const atual = contratoPorVeiculo[v.veiculo_id];
+        if(!atual || c.id > atual.id){
+            contratoPorVeiculo[v.veiculo_id] = c;
+        }
+    });
+
+    todosVeiculosFaturamento = (veiculos || []).map(vei => {
+        const contrato = contratoPorVeiculo[vei.id] || null;
+        return {...vei, contrato, locado: !!contrato};
+    });
+
+    renderizarVeiculosFaturamento();
+
+}
+
+function renderizarVeiculosFaturamento(){
+
+    const filtroPlaca = (document.getElementById('filtroVeiculoPlaca')?.value || '').trim().toUpperCase();
+    const filtroSituacao = document.getElementById('filtroVeiculoSituacao')?.value || '';
+
+    let lista = todosVeiculosFaturamento;
+
+    if(filtroPlaca){
+        lista = lista.filter(v => v.placa?.toUpperCase().includes(filtroPlaca));
+    }
+
+    if(filtroSituacao === 'locado'){
+        lista = lista.filter(v => v.locado);
+    } else if(filtroSituacao === 'disponivel'){
+        lista = lista.filter(v => !v.locado);
+    }
+
+    let html = '';
+
+    lista.forEach(v => {
+
+        const veiculoDesc = [v.fabricante, v.modelo].filter(Boolean).join(' ') || '-';
+        const situacaoBadge = v.locado
+            ? '<span class="badge bg-success">Locado</span>'
+            : '<span class="badge bg-secondary">Disponível</span>';
+        const cliente = v.contrato?.clientes?.nome ?? '';
+        const contratoTxt = v.contrato ? `#${v.contrato.id}` : '';
+        const valor = v.contrato?.valor != null
+            ? Number(v.contrato.valor).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})
+            : '';
+
+        html += `
+        <tr>
+            <td>${v.placa}</td>
+            <td>${veiculoDesc}</td>
+            <td>${situacaoBadge}</td>
+            <td>${cliente}</td>
+            <td>${contratoTxt}</td>
+            <td>${valor}</td>
+        </tr>
+        `;
+
+    });
+
+    document.getElementById('listaVeiculosFaturamento').innerHTML =
+        html || '<tr><td colspan="6" class="text-muted">Nenhum veículo encontrado.</td></tr>';
+
+    document.getElementById('cardTotalVeiculos').textContent = todosVeiculosFaturamento.length;
+    document.getElementById('cardVeiculosLocados').textContent = todosVeiculosFaturamento.filter(v => v.locado).length;
+    document.getElementById('cardVeiculosDisponiveis').textContent = todosVeiculosFaturamento.filter(v => !v.locado).length;
+
+    const totalFaturar = todosVeiculosFaturamento
+        .filter(v => v.locado)
+        .reduce((soma, v) => soma + (Number(v.contrato?.valor) || 0), 0);
+
+    document.getElementById('cardValorFaturar').textContent =
+        totalFaturar.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+
+}
 
 // ---------------------------------------------------------------------
 // Geração em massa: "Gerar faturamento do mês" (pedido do Sérgio, substitui
@@ -308,3 +439,4 @@ async function gerarFaturamentoMes(){
 
 checarLogin();
 carregarContratosDisponiveis();
+carregarVeiculosFaturamento();
