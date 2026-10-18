@@ -296,9 +296,20 @@ async function carregarVeiculosFaturamento(){
         }
     });
 
+    // O valor do contrato é total (soma de todos os veículos vinculados a ele).
+    // Para mostrar o valor mensal de cada veículo individualmente, divide o
+    // valor do contrato pela quantidade de veículos "Locado" vinculados a ele.
+    const contagemPorContrato = {};
+    Object.values(contratoPorVeiculo).forEach(c => {
+        contagemPorContrato[c.id] = (contagemPorContrato[c.id] || 0) + 1;
+    });
+
     todosVeiculosFaturamento = (veiculos || []).map(vei => {
         const contrato = contratoPorVeiculo[vei.id] || null;
-        return {...vei, contrato, locado: !!contrato};
+        const valorMensal = (contrato && contrato.valor != null)
+            ? Number(contrato.valor) / (contagemPorContrato[contrato.id] || 1)
+            : null;
+        return {...vei, contrato, locado: !!contrato, valorMensal};
     });
 
     renderizarVeiculosFaturamento();
@@ -332,8 +343,8 @@ function renderizarVeiculosFaturamento(){
             : '<span class="badge bg-secondary">Disponível</span>';
         const cliente = v.contrato?.clientes?.nome ?? '';
         const contratoTxt = v.contrato ? `#${v.contrato.id}` : '';
-        const valor = v.contrato?.valor != null
-            ? Number(v.contrato.valor).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})
+        const valor = v.valorMensal != null
+            ? v.valorMensal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})
             : '';
 
         html += `
@@ -358,7 +369,7 @@ function renderizarVeiculosFaturamento(){
 
     const totalFaturar = todosVeiculosFaturamento
         .filter(v => v.locado)
-        .reduce((soma, v) => soma + (Number(v.contrato?.valor) || 0), 0);
+        .reduce((soma, v) => soma + (Number(v.valorMensal) || 0), 0);
 
     document.getElementById('cardValorFaturar').textContent =
         totalFaturar.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
