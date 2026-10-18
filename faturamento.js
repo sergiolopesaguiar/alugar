@@ -269,7 +269,7 @@ async function carregarVeiculosFaturamento(){
 
     const {data: vinculos, error: errVinc} = await supabaseClient
         .from('contratos_veiculos')
-        .select('veiculo_id, contratos(id, valor, data_inicial, data_final, clientes(nome))');
+        .select('veiculo_id, valor, contratos(id, valor, data_inicial, data_final, clientes(nome))');
 
     if(errVinc){
         document.getElementById('listaVeiculosFaturamento').innerHTML =
@@ -280,10 +280,13 @@ async function carregarVeiculosFaturamento(){
     const hojeStr = new Date().toISOString().slice(0, 10);
 
     // Para cada veículo, guarda o contrato vigente (sem data_final, ou com
-    // data_final ainda não vencida). Se por algum motivo houver mais de um
-    // vínculo vigente para o mesmo veículo, fica com o contrato de id mais
-    // alto (o mais recente) - cenário que não deveria ocorrer em uso normal.
+    // data_final ainda não vencida) e o valor mensal daquele veículo
+    // específico dentro do vínculo (contratos_veiculos.valor). Se por algum
+    // motivo houver mais de um vínculo vigente para o mesmo veículo, fica com
+    // o contrato de id mais alto (o mais recente) - cenário que não deveria
+    // ocorrer em uso normal.
     const contratoPorVeiculo = {};
+    const valorVinculoPorVeiculo = {};
 
     (vinculos || []).forEach(v => {
         const c = v.contratos;
@@ -293,12 +296,15 @@ async function carregarVeiculosFaturamento(){
         const atual = contratoPorVeiculo[v.veiculo_id];
         if(!atual || c.id > atual.id){
             contratoPorVeiculo[v.veiculo_id] = c;
+            valorVinculoPorVeiculo[v.veiculo_id] = v.valor;
         }
     });
 
-    // O valor do contrato é total (soma de todos os veículos vinculados a ele).
-    // Para mostrar o valor mensal de cada veículo individualmente, divide o
-    // valor do contrato pela quantidade de veículos "Locado" vinculados a ele.
+    // Cada veículo de um contrato pode ter seu próprio valor mensal, gravado
+    // na própria linha de contratos_veiculos (tela de Contratos). Usa esse
+    // valor quando preenchido. Só para contratos antigos/ainda não migrados
+    // (contratos_veiculos.valor vazio) é que cai de volta para dividir o
+    // valor TOTAL do contrato igualmente entre os veículos vinculados a ele.
     const contagemPorContrato = {};
     Object.values(contratoPorVeiculo).forEach(c => {
         contagemPorContrato[c.id] = (contagemPorContrato[c.id] || 0) + 1;
@@ -306,9 +312,13 @@ async function carregarVeiculosFaturamento(){
 
     todosVeiculosFaturamento = (veiculos || []).map(vei => {
         const contrato = contratoPorVeiculo[vei.id] || null;
-        const valorMensal = (contrato && contrato.valor != null)
-            ? Number(contrato.valor) / (contagemPorContrato[contrato.id] || 1)
-            : null;
+        const valorVinculo = valorVinculoPorVeiculo[vei.id];
+        let valorMensal = null;
+        if(valorVinculo != null){
+            valorMensal = Number(valorVinculo);
+        } else if(contrato && contrato.valor != null){
+            valorMensal = Number(contrato.valor) / (contagemPorContrato[contrato.id] || 1);
+        }
         return {...vei, contrato, locado: !!contrato, valorMensal};
     });
 
