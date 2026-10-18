@@ -228,6 +228,96 @@
 
         </div>
 
+        <div class="card shadow mt-4">
+
+            <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+
+                <h3 class="mb-0 h4">Veículos e Contratos</h3>
+
+            </div>
+
+            <div class="card-body">
+
+                <p class="text-muted small mb-3">Todos os veículos da frota e sua situação de contrato. Veículos "Locado" estão vinculados a um contrato vigente e devem ser considerados no faturamento; veículos "Disponível" não estão em nenhum contrato no momento.</p>
+
+                <div class="row g-2 mb-3">
+
+                    <div class="col-6 col-md-3">
+                        <div class="card text-center shadow-sm border-0 bg-light">
+                            <div class="card-body py-2">
+                                <div class="small text-muted">Total de Veículos</div>
+                                <div class="h4 mb-0" id="cardTotalVeiculos">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="card text-center shadow-sm border-0 bg-success bg-opacity-25">
+                            <div class="card-body py-2">
+                                <div class="small text-muted">Locados</div>
+                                <div class="h4 mb-0" id="cardVeiculosLocados">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="card text-center shadow-sm border-0 bg-secondary bg-opacity-25">
+                            <div class="card-body py-2">
+                                <div class="small text-muted">Disponíveis</div>
+                                <div class="h4 mb-0" id="cardVeiculosDisponiveis">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="card text-center shadow-sm border-0 bg-primary bg-opacity-10">
+                            <div class="card-body py-2">
+                                <div class="small text-muted">Total a Faturar/Mês</div>
+                                <div class="h4 mb-0" id="cardValorFaturar">R$ 0,00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mb-3 no-print">
+                    <input id="filtroVeiculoPlaca" type="text" class="form-control" style="max-width:220px" placeholder="Filtrar por placa...">
+                    <select id="filtroVeiculoSituacao" class="form-select" style="max-width:220px">
+                        <option value="">Todas as situações</option>
+                        <option value="locado">Somente Locados</option>
+                        <option value="disponivel">Somente Disponíveis</option>
+                    </select>
+                </div>
+
+                <div class="table-responsive">
+
+                    <table class="table table-striped mb-0">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Placa</th>
+                                <th>Veículo</th>
+                                <th>Situação</th>
+                                <th>Cliente</th>
+                                <th>Contrato</th>
+                                <th>Valor</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="listaVeiculosFaturamento"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
     </div>
@@ -258,7 +348,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="faturamento.js?v=4"></script>
+<script src="faturamento.js?v=5"></script>
 
 </body>
 
