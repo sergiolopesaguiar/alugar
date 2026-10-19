@@ -238,7 +238,7 @@
 
             <div class="card-body">
 
-                <p class="text-muted small mb-2">Monta a nota de locação do contrato escolhido (veículos e valores) pronta para impressão/PDF, numa nova aba. Campos como condição de pagamento, vencimento e inscrição estadual podem ser digitados/ajustados direto na nota antes de imprimir.</p>
+                <p class="text-muted small mb-2">Monta a nota de locação do contrato escolhido (veículos e valores) pronta para impressão/PDF, numa nova aba. O número da nota é sugerido automaticamente (editável) a partir do contrato e da data de emissão. Campos como condição de pagamento e inscrição estadual podem ser digitados/ajustados direto na nota antes de imprimir.</p>
 
                 <div class="d-flex gap-2 flex-wrap align-items-end">
 
@@ -257,6 +257,16 @@
                     <div>
                         <label class="form-label mb-0 small text-muted">Data de emissão</label>
                         <input id="notaDataEmissao" type="date" class="form-control">
+                    </div>
+
+                    <div>
+                        <label class="form-label mb-0 small text-muted">Vencimento</label>
+                        <input id="notaVencimento" type="date" class="form-control">
+                    </div>
+
+                    <div>
+                        <label class="form-label mb-0 small text-muted">Número da nota</label>
+                        <input id="notaNumero" type="text" class="form-control" style="max-width:140px" placeholder="Ex: 261010">
                     </div>
 
                     <button type="button" class="btn btn-primary" onclick="gerarNotaLocacao()">
@@ -389,7 +399,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="faturamento.js?v=7"></script>
+<script src="faturamento.js?v=8"></script>
 
 </body>
 
