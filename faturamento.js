@@ -261,6 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const notaData = document.getElementById('notaDataEmissao');
     if(notaData){
         notaData.value = new Date().toISOString().slice(0, 10);
+        notaData.addEventListener('change', atualizarNumeroNotaAuto);
+    }
+
+    const notaContratoSelect = document.getElementById('notaContratoId');
+    if(notaContratoSelect){
+        notaContratoSelect.addEventListener('change', atualizarNumeroNotaAuto);
     }
 });
 
@@ -482,10 +488,15 @@ async function gerarFaturamentoMes(){
 // Nota de Locação (pedido do Sérgio, com um PDF-modelo real como exemplo):
 // monta uma "Nota de Locação" do contrato escolhido - veículos e valores,
 // no mesmo layout do modelo em papel usado pela empresa - e abre pronta
-// para impressão/PDF numa aba nova. Os dados que não existem no banco
-// (inscrição estadual, condição de pagamento, vencimento) vêm com um
-// valor padrão e ficam editáveis direto no documento (contenteditable),
-// sem precisar de campos extras no formulário nem colunas novas no banco.
+// para impressão/PDF numa aba nova.
+//
+// Número da nota e vencimento têm campo próprio no formulário (#notaNumero,
+// #notaVencimento - pedido do Sérgio). O número é sugerido automaticamente a
+// partir do contrato + data de emissão (gerarNumeroNota/
+// atualizarNumeroNotaAuto), mas pode ser digitado manualmente. Os demais
+// dados que não existem no banco (inscrição estadual, condição de
+// pagamento) continuam vindo com um valor padrão e ficam editáveis direto
+// no documento (contenteditable), sem precisar de colunas novas no banco.
 // ---------------------------------------------------------------------
 
 const MESES_PT = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO',
@@ -502,6 +513,28 @@ function gerarNumeroNota(contratoId, dataEmissaoIso){
     const id2 = String(contratoId).padStart(2, '0');
 
     return `${ano2}${mes2}${id2}`;
+
+}
+
+// Preenche o campo "Número da nota" automaticamente a partir do contrato +
+// data de emissão escolhidos, mas só quando o campo ainda está vazio ou
+// contém o último valor que a própria função gerou - assim nunca sobrescreve
+// um número digitado manualmente pelo usuário.
+function atualizarNumeroNotaAuto(){
+
+    const campoNumero = document.getElementById('notaNumero');
+    if(!campoNumero) return;
+
+    const contratoId = document.getElementById('notaContratoId').value;
+    const dataEmissaoIso = document.getElementById('notaDataEmissao').value;
+
+    if(!contratoId || !dataEmissaoIso) return;
+
+    if(campoNumero.value && campoNumero.value !== campoNumero.dataset.auto) return;
+
+    const numero = gerarNumeroNota(contratoId, dataEmissaoIso);
+    campoNumero.value = numero;
+    campoNumero.dataset.auto = numero;
 
 }
 
@@ -632,7 +665,7 @@ function montarHtmlNotaLocacao(dados){
             </div>
             <div class="dest-linha">
                 <span><b>COND. PAGAMENTO:</b> <span contenteditable="true">BOLETO</span></span>
-                <span><b>VENC.:</b> <span contenteditable="true"></span></span>
+                <span><b>VENC.:</b> <span contenteditable="true">${dados.vencimentoFmt || ''}</span></span>
             </div>
         </div>
 
@@ -724,11 +757,18 @@ async function gerarNotaLocacao(){
     const dataEmissaoIso = document.getElementById('notaDataEmissao').value || new Date().toISOString().slice(0, 10);
     const dataEmissaoFmt = new Date(dataEmissaoIso + 'T00:00:00').toLocaleDateString('pt-BR');
 
+    const numeroInformado = (document.getElementById('notaNumero').value || '').trim();
+    const numero = numeroInformado || gerarNumeroNota(contratoId, dataEmissaoIso);
+
+    const vencimentoIso = document.getElementById('notaVencimento').value;
+    const vencimentoFmt = vencimentoIso ? new Date(vencimentoIso + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+
     const cliente = contrato.clientes || {};
 
     const html = montarHtmlNotaLocacao({
-        numero: gerarNumeroNota(contratoId, dataEmissaoIso),
+        numero,
         dataEmissaoFmt,
+        vencimentoFmt,
         mesRefLabel,
         nomeCliente: cliente.nome || '',
         endereco: formatarEnderecoCliente(cliente),
