@@ -17,11 +17,18 @@
 //    (servico_id). A OS sai da lista quando o saldo chega a zero.
 //  - ernani_historico: registro de inclusões, alterações e exclusões.
 //
+// Coluna data_pagamento (2026-11-22, pedido do Sérgio): data em que o valor
+// pago foi pago, mostrada ao lado de FORMA DE PAG. Nas linhas importadas foi
+// preenchida a partir da data escrita na forma de pagamento (ex.: "boleto 21/09").
+// O mês (bloco) de um lançamento novo vem sempre da data; não há mais o campo
+// "Mês da planilha" (gerava lançamentos em mês errado).
+//
 // Regras de cálculo:
 //  - Total débitos = soma de "valor" dos meses até o mês atual.
 //  - Total pago    = soma de "valor_pago" (todas as linhas).
 //  - Saldo a pagar = total débitos - total pago.
 //  - Parcelas de meses futuros não entram no saldo; aparecem em "A vencer".
+//  - Todo valor pago aparece na planilha, mesmo que esteja num mês futuro.
 //  - Um pagamento vinculado a uma parcela/OS (campo vinculo) é só uma
 //    referência: entra uma única vez no total pago.
 
@@ -192,7 +199,7 @@ async function trocarFornecedor(){
 async function carregarDados(){
 
     if(!fornecedorId){
-        document.getElementById('lista').innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Cadastre um terceiro para começar.</td></tr>';
+        document.getElementById('lista').innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Cadastre um terceiro para começar.</td></tr>';
         return;
     }
 
@@ -208,7 +215,6 @@ async function carregarDados(){
     servicos = (rs.data || []).map(s => ({...s, valor_total: Number(s.valor_total) || 0, valor_pago_inicial: Number(s.valor_pago_inicial) || 0}));
 
     preencherFiltros();
-    preencherMesesBarra();
     preencherVinculos();
     render();
     atualizarContadorPendentes();
@@ -249,14 +255,7 @@ function listaMesesEscolha(){
     const fim = somarMes(atual, 12);
     const out = [];
     for(let m = inicio; m <= fim; m = somarMes(m, 1)){ out.push(m); }
-    return out.reverse();
-}
-
-function preencherMesesBarra(){
-    const sel = document.getElementById('qMes');
-    const v = sel.value;
-    sel.innerHTML = '<option value="">Pela data</option>' + listaMesesEscolha().map(m => `<option value="${m}">${rotuloMesCurto(m)}</option>`).join('');
-    sel.value = v;
+    return out;
 }
 
 function preencherVinculos(){
@@ -303,10 +302,11 @@ function filtrar(){
     return lancamentos.filter(l => {
         if(fMes && l.mes !== fMes){ return false; }
         if(fAno && l.mes.slice(0, 4) !== fAno){ return false; }
-        if(!fMes && !mostrarFuturo && l.mes > atual){ return false; }
+        // Débito futuro fica oculto; qualquer linha com valor pago sempre aparece.
+        if(!fMes && !mostrarFuturo && l.mes > atual && !l.valor_pago){ return false; }
         if(fVei && !(l.descricao || '').toUpperCase().includes(fVei.toUpperCase())){ return false; }
         if(busca){
-            const alvo = [l.descricao, l.forma_pagamento, l.vinculo, dataBR(l.data)].join(' ').toLowerCase();
+            const alvo = [l.descricao, l.forma_pagamento, l.vinculo, dataBR(l.data), dataBR(l.data_pagamento)].join(' ').toLowerCase();
             if(!alvo.includes(busca)){ return false; }
         }
         return true;
@@ -350,7 +350,7 @@ function render(){
         let gv = 0, gp = 0;
         g.linhas.forEach(l => { gv += l.valor; gp += l.valor_pago; });
         fD += gv; fP += gp;
-        html += `<tr class="ce-mes"><td>${rotuloMes(g.mes)}${g.mes > atual ? ' <span class="badge bg-secondary">a vencer</span>' : ''}</td><td></td><td class="ce-num">${brl(gv)}</td><td class="ce-num">${brl(gp)}</td><td class="small fw-normal">${g.linhas.length} lançamentos</td><td class="no-print"></td></tr>`;
+        html += `<tr class="ce-mes"><td>${rotuloMes(g.mes)}${g.mes > atual ? ' <span class="badge bg-secondary">a vencer</span>' : ''}</td><td></td><td class="ce-num">${brl(gv)}</td><td class="ce-num">${brl(gp)}</td><td class="small fw-normal">${g.linhas.length} lançamentos</td><td></td><td class="no-print"></td></tr>`;
         g.linhas.forEach(l => {
             html += `<tr${l.id === editandoId ? ' class="ce-editando"' : ''}>
                 <td class="ce-desc" title="${esc(l.descricao)}"><span class="ce-tag ce-tag-${l.tipo}">${TAGS[l.tipo] || ''}</span>${esc(l.descricao)}${l.vinculo ? `<span class="ce-vinc">→ ${esc(l.vinculo)}</span>` : ''}</td>
@@ -358,6 +358,7 @@ function render(){
                 <td class="ce-num">${l.valor ? brl(l.valor) : ''}</td>
                 <td class="ce-num ce-pago">${l.valor_pago ? brl(l.valor_pago) : ''}</td>
                 <td>${esc(l.forma_pagamento)}</td>
+                <td>${dataBR(l.data_pagamento)}</td>
                 <td class="text-center no-print">
                     <button class="ce-acao" title="Editar" aria-label="Editar lançamento" onclick="editar(${l.id})"><i class="bi bi-pencil"></i></button>
                     <button class="ce-acao" title="Histórico" aria-label="Histórico do lançamento" onclick="abrirHistorico(${l.id})"><i class="bi bi-clock-history"></i></button>
@@ -368,11 +369,11 @@ function render(){
     });
 
     if(!grupos.length){
-        html = '<tr><td colspan="6" class="text-center text-muted py-3">Nenhum lançamento encontrado.</td></tr>';
+        html = '<tr><td colspan="7" class="text-center text-muted py-3">Nenhum lançamento encontrado.</td></tr>';
     }
 
     document.getElementById('lista').innerHTML = html;
-    document.getElementById('rodape').innerHTML = `<tr><td>TOTAL (filtro atual)</td><td></td><td class="ce-num">${brl(fD)}</td><td class="ce-num">${brl(fP)}</td><td>Saldo: R$ ${brl(fD - fP)}</td><td class="no-print"></td></tr>`;
+    document.getElementById('rodape').innerHTML = `<tr><td>TOTAL (filtro atual)</td><td></td><td class="ce-num">${brl(fD)}</td><td class="ce-num">${brl(fP)}</td><td>Saldo: R$ ${brl(fD - fP)}</td><td></td><td class="no-print"></td></tr>`;
 }
 
 // ---------------------------------------------------------------------
@@ -386,6 +387,10 @@ function ajustarBarra(){
     const ehPago = tipo === 'pagamento' || tipo === 'credito';
     document.getElementById('boxValor').classList.toggle('d-none', ehPago && !ambos);
     document.getElementById('boxPago').classList.toggle('d-none', !ehPago && !ambos);
+    // Pagamento/crédito: a "Data" já é a data do pagamento. Linha com débito e
+    // pagamento juntos (importada da planilha) ganha um campo próprio.
+    document.getElementById('boxDataPag').classList.toggle('d-none', !ambos);
+    document.getElementById('lblData').textContent = (ehPago && !ambos) ? 'Data do pagamento' : 'Data';
     desc.placeholder = {
         pagamento: 'Pix (opcional)',
         parcela: 'YARIS 27/36',
@@ -398,7 +403,6 @@ function ajustarBarra(){
 function montarDados(){
     const tipo = document.getElementById('qTipo').value;
     const data = document.getElementById('qData').value || null;
-    const mesEscolhido = document.getElementById('qMes').value;
     const editando = lancamentos.find(l => l.id === editandoId);
     const ambos = editando && editando.valor && editando.valor_pago;
     const ehPago = tipo === 'pagamento' || tipo === 'credito';
@@ -410,7 +414,14 @@ function montarDados(){
     let descricao = document.getElementById('qDesc').value.trim();
     if(!descricao && tipo === 'pagamento'){ descricao = 'Pagamento'; }
     if(!descricao && tipo === 'credito'){ descricao = 'Crédito'; }
-    const mes = mesEscolhido || (data ? data.slice(0, 7) : (editando ? editando.mes : mesAtual()));
+    // Mês do bloco = mês da data. Na edição, se a data não mudou, a linha fica
+    // no bloco em que já estava (algumas linhas importadas têm data de outro mês).
+    const dataOriginal = editando && editando.data ? String(editando.data).slice(0, 10) : null;
+    const mes = (editando && data === dataOriginal) ? editando.mes : (data ? data.slice(0, 7) : (editando ? editando.mes : mesAtual()));
+    let dataPagamento = null;
+    if(valorPago){
+        dataPagamento = ambos ? (document.getElementById('qDataPag').value || null) : data;
+    }
     return {
         fornecedor_id: fornecedorId,
         tipo,
@@ -419,6 +430,7 @@ function montarDados(){
         mes,
         valor,
         valor_pago: valorPago,
+        data_pagamento: dataPagamento,
         forma_pagamento: document.getElementById('qForma').value.trim() || null,
         vinculo: document.getElementById('qVinc').value || null
     };
@@ -453,9 +465,9 @@ async function lancar(){
         if(dados.valor_pago){
             const dup = lancamentos.find(l =>
                 Math.abs(l.valor_pago - dados.valor_pago) < 0.005 &&
-                (l.data || '') === (dados.data || '') &&
+                String(l.data_pagamento || l.data || '').slice(0, 10) === (dados.data_pagamento || '') &&
                 (l.forma_pagamento || '').toLowerCase() === (dados.forma_pagamento || '').toLowerCase());
-            if(dup && !confirm(`Já existe um pagamento de R$ ${brl(dados.valor_pago)} em ${dataBR(dados.data) || '(sem data)'} (${dup.forma_pagamento || 'sem forma'}).\n\nLançar mesmo assim?`)){
+            if(dup && !confirm(`Já existe um pagamento de R$ ${brl(dados.valor_pago)} em ${dataBR(dados.data_pagamento) || '(sem data)'} (${dup.forma_pagamento || 'sem forma'}).\n\nLançar mesmo assim?`)){
                 return;
             }
         }
@@ -476,7 +488,7 @@ async function lancar(){
 function resumoLinha(l){
     return {
         tipo: l.tipo, descricao: l.descricao, data: l.data, mes: l.mes,
-        valor: l.valor, valor_pago: l.valor_pago, forma_pagamento: l.forma_pagamento, vinculo: l.vinculo
+        valor: l.valor, valor_pago: l.valor_pago, data_pagamento: l.data_pagamento, forma_pagamento: l.forma_pagamento, vinculo: l.vinculo
     };
 }
 
@@ -495,16 +507,7 @@ function editar(id){
         vinc.insertAdjacentHTML('beforeend', `<option value="${esc(l.vinculo)}">${esc(l.vinculo)}</option>`);
     }
     vinc.value = l.vinculo || '';
-    // Linha sem data (ou com data fora do mês do bloco) mantém o mês atual do bloco.
-    const qMes = document.getElementById('qMes');
-    if(!l.data || String(l.data).slice(0, 7) !== l.mes){
-        if(![...qMes.options].some(o => o.value === l.mes)){
-            qMes.insertAdjacentHTML('beforeend', `<option value="${l.mes}">${rotuloMesCurto(l.mes)}</option>`);
-        }
-        qMes.value = l.mes;
-    } else {
-        qMes.value = '';
-    }
+    document.getElementById('qDataPag').value = l.data_pagamento ? String(l.data_pagamento).slice(0, 10) : '';
     document.getElementById('btnLancar').textContent = 'Salvar alteração';
     document.getElementById('btnCancelarEdicao').classList.remove('d-none');
     document.getElementById('barraRapida').classList.add('editando');
@@ -522,7 +525,7 @@ function cancelarEdicao(){
     document.getElementById('qPago').value = '';
     document.getElementById('qForma').value = '';
     document.getElementById('qVinc').value = '';
-    document.getElementById('qMes').value = '';
+    document.getElementById('qDataPag').value = '';
     document.getElementById('btnLancar').textContent = 'Lançar';
     document.getElementById('btnCancelarEdicao').classList.add('d-none');
     document.getElementById('barraRapida').classList.remove('editando');
@@ -834,7 +837,7 @@ function descreverValores(o){
     if(o.data){ partes.push(dataBR(o.data)); }
     if(Number(o.valor)){ partes.push('valor R$ ' + brl(o.valor)); }
     if(Number(o.valor_total)){ partes.push('total R$ ' + brl(o.valor_total)); }
-    if(Number(o.valor_pago)){ partes.push('pago R$ ' + brl(o.valor_pago)); }
+    if(Number(o.valor_pago)){ partes.push('pago R$ ' + brl(o.valor_pago) + (o.data_pagamento ? ' em ' + dataBR(o.data_pagamento) : '')); }
     if(o.forma_pagamento){ partes.push(esc(o.forma_pagamento)); }
     if(o.vinculo){ partes.push('→ ' + esc(o.vinculo)); }
     if(o.parcelas){ partes.push(o.parcelas + ' parcelas de R$ ' + brl(o.valor) + ' (' + esc(o.de) + ' a ' + esc(o.ate) + ')'); }
@@ -901,8 +904,8 @@ function linhasExportacao(){
     agrupar(linhasVisiveis).forEach(g => {
         let gv = 0, gp = 0;
         g.linhas.forEach(l => { gv += l.valor; gp += l.valor_pago; });
-        out.push({mes: true, descricao: rotuloMes(g.mes), data: '', valor: gv, pago: gp, forma: ''});
-        g.linhas.forEach(l => out.push({mes: false, descricao: l.descricao || '', data: dataBR(l.data), valor: l.valor, pago: l.valor_pago, forma: [l.forma_pagamento, l.vinculo ? '→ ' + l.vinculo : ''].filter(Boolean).join(' ')}));
+        out.push({mes: true, descricao: rotuloMes(g.mes), data: '', valor: gv, pago: gp, forma: '', dataPag: ''});
+        g.linhas.forEach(l => out.push({mes: false, descricao: l.descricao || '', data: dataBR(l.data), valor: l.valor, pago: l.valor_pago, forma: [l.forma_pagamento, l.vinculo ? '→ ' + l.vinculo : ''].filter(Boolean).join(' '), dataPag: dataBR(l.data_pagamento)}));
     });
     return out;
 }
@@ -927,11 +930,11 @@ async function exportarExcel(){
         ['TOTAL DÉBITOS', document.getElementById('totDebitos').textContent, 'DATA ATUAL', dataBR(hojeISO())],
         ['TOTAL PAGO', document.getElementById('totPago').textContent],
         [],
-        ['DESCRIÇÃO', 'DATA', 'VALOR', 'VALOR PAGO', 'FORMA DE PAG']
+        ['DESCRIÇÃO', 'DATA', 'VALOR', 'VALOR PAGO', 'FORMA DE PAG', 'DATA PAGTO']
     ];
-    linhasExportacao().forEach(r => aoa.push([r.descricao, r.data, r.valor || null, r.pago || null, r.forma]));
+    linhasExportacao().forEach(r => aoa.push([r.descricao, r.data, r.valor || null, r.pago || null, r.forma, r.dataPag]));
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [{wch: 34}, {wch: 12}, {wch: 14}, {wch: 14}, {wch: 26}];
+    ws['!cols'] = [{wch: 34}, {wch: 12}, {wch: 14}, {wch: 14}, {wch: 26}, {wch: 12}];
     const range = XLSX.utils.decode_range(ws['!ref']);
     for(let r = 5; r <= range.e.r; r++){
         ['C', 'D'].forEach(c => { const cel = ws[c + (r + 1)]; if(cel && typeof cel.v === 'number'){ cel.z = '#,##0.00'; } });
@@ -943,8 +946,8 @@ async function exportarExcel(){
 
 function exportarPdf(){
     const linhas = linhasExportacao().map(r => r.mes
-        ? `<tr class="m"><td>${esc(r.descricao)}</td><td></td><td class="n">${brl(r.valor)}</td><td class="n">${brl(r.pago)}</td><td></td></tr>`
-        : `<tr><td>${esc(r.descricao)}</td><td>${r.data}</td><td class="n">${r.valor ? brl(r.valor) : ''}</td><td class="n">${r.pago ? brl(r.pago) : ''}</td><td>${esc(r.forma)}</td></tr>`).join('');
+        ? `<tr class="m"><td>${esc(r.descricao)}</td><td></td><td class="n">${brl(r.valor)}</td><td class="n">${brl(r.pago)}</td><td></td><td></td></tr>`
+        : `<tr><td>${esc(r.descricao)}</td><td>${r.data}</td><td class="n">${r.valor ? brl(r.valor) : ''}</td><td class="n">${r.pago ? brl(r.pago) : ''}</td><td>${esc(r.forma)}</td><td>${r.dataPag}</td></tr>`).join('');
     const w = window.open('', '_blank');
     if(!w){ alert('Libere as janelas pop-up deste site para gerar o PDF.'); return; }
     w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Controle ${esc(nomeFornecedor())}</title>
@@ -966,7 +969,7 @@ tr.m td{background:#dde3ea;font-weight:700;border-top:2px solid #8a96a3}
 <div class="o">TOTAL PAGO</div><div class="c">${document.getElementById('totPago').textContent}</div>
 <div class="o">DATA ATUAL</div><div class="c">${dataBR(hojeISO())}</div>
 </div>
-<table><thead><tr><th>DESCRIÇÃO</th><th>DATA</th><th class="n">VALOR</th><th class="n">VALOR PAGO</th><th>FORMA DE PAG</th></tr></thead><tbody>${linhas}</tbody></table>
+<table><thead><tr><th>DESCRIÇÃO</th><th>DATA</th><th class="n">VALOR</th><th class="n">VALOR PAGO</th><th>FORMA DE PAG</th><th>DATA PAGTO</th></tr></thead><tbody>${linhas}</tbody></table>
 </body></html>`);
     w.document.close();
     setTimeout(() => { try{ w.print(); } catch(e){} }, 400);
