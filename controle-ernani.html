@@ -31,8 +31,9 @@
         .ce-rapido{background:#fffbe8;border:1px solid #e6d48a;border-radius:4px;padding:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;}
         .ce-rapido label{font-size:11px;color:#5c4b00;display:block;margin-bottom:1px;}
         .ce-rapido.editando{background:#fff1c2;border-color:#d4a72c;}
-        .ce-tabela-box{border:1px solid #bfbfbf;max-height:75vh;}
-        .ce-tabela{font-size:13px;min-width:820px;}
+        .ce-tabela-box{border:1px solid #bfbfbf;max-height:75vh;width:fit-content;max-width:100%;}
+        .ce-tabela{font-size:13px;width:auto;}
+        .ce-tabela-box > .ce-tabela{min-width:760px;}
         .ce-tabela td,.ce-tabela th{padding:2px 8px;border-right:1px solid #d9d9d9;vertical-align:middle;white-space:nowrap;}
         .ce-tabela thead th{background:#1f1f1f;color:#fff;position:sticky;top:0;z-index:2;border-color:#444;}
         .ce-tabela tfoot td{background:#1f1f1f;color:#fff;font-weight:700;border-color:#444;}
@@ -40,7 +41,7 @@
         .ce-tabela .ce-num{text-align:right;font-variant-numeric:tabular-nums;}
         .ce-tabela .ce-pago{color:#14532d;}
         .ce-tabela tr.ce-editando td{background:#fff4c2;}
-        .ce-tabela .ce-desc{max-width:340px;overflow:hidden;text-overflow:ellipsis;}
+        .ce-tabela .ce-desc{max-width:260px;overflow:hidden;text-overflow:ellipsis;}
         .ce-tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px;min-width:34px;text-align:center;margin-right:6px;}
         .ce-tag-parcela{background:#dbe7f6;color:#123a6b;}
         .ce-tag-os{background:#e4e4e4;color:#262626;}
@@ -51,7 +52,7 @@
         .ce-acao{background:none;border:0;padding:0 4px;color:#555;line-height:1;}
         #modalCarro .ce-tabela, #modalAdicionar .ce-tabela{min-width:0;}
         .modal .form-label{font-size:.72rem;}
-        .modal .ce-tabela{min-width:720px;}
+        .modal .ce-tabela{min-width:720px;width:100%;}
         #modalCarro .ce-tabela{min-width:0;}
         .ce-acao:hover{color:#000;}
         @media print{
@@ -256,7 +257,7 @@
                         <input id="qDesc" class="form-control form-control-sm">
                     </div>
                     <div>
-                        <label for="qData" id="lblData">Data</label>
+                        <label for="qData" id="lblData">Vencimento</label>
                         <input id="qData" type="date" class="form-control form-control-sm">
                     </div>
                     <div style="flex:0 1 115px" id="boxValor">
@@ -292,7 +293,7 @@
                         <thead>
                             <tr>
                                 <th>DESCRIÇÃO</th>
-                                <th style="width:96px">DATA</th>
+                                <th style="width:96px">VENCIMENTO</th>
                                 <th class="text-end" style="width:110px">VALOR</th>
                                 <th class="text-end" style="width:110px">VALOR PAGO</th>
                                 <th style="width:170px">FORMA DE PAG</th>
@@ -456,7 +457,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="controle-ernani.js?v=2"></script>
+<script src="controle-ernani.js?v=3"></script>
 
 </body>
 
