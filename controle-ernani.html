@@ -256,7 +256,7 @@
                         <input id="qDesc" class="form-control form-control-sm">
                     </div>
                     <div>
-                        <label for="qData">Data</label>
+                        <label for="qData" id="lblData">Data</label>
                         <input id="qData" type="date" class="form-control form-control-sm">
                     </div>
                     <div style="flex:0 1 115px" id="boxValor">
@@ -276,9 +276,9 @@
                         <label for="qVinc">Vincular a (opcional)</label>
                         <select id="qVinc" class="form-select form-select-sm"></select>
                     </div>
-                    <div style="flex:0 1 110px" id="boxMes">
-                        <label for="qMes">Mês da planilha</label>
-                        <select id="qMes" class="form-select form-select-sm" title="Mês em que a linha aparece (usado quando não há data)"></select>
+                    <div class="d-none" id="boxDataPag">
+                        <label for="qDataPag">Data pagamento</label>
+                        <input id="qDataPag" type="date" class="form-control form-control-sm">
                     </div>
                     <button id="btnLancar" class="btn btn-sm btn-primary fw-bold" onclick="lancar()">Lançar</button>
                     <button id="btnCancelarEdicao" class="btn btn-sm btn-secondary d-none" onclick="cancelarEdicao()">Cancelar</button>
@@ -296,15 +296,16 @@
                                 <th class="text-end" style="width:110px">VALOR</th>
                                 <th class="text-end" style="width:110px">VALOR PAGO</th>
                                 <th style="width:170px">FORMA DE PAG</th>
+                                <th style="width:96px">DATA PAGTO</th>
                                 <th class="text-center no-print" style="width:92px">AÇÕES</th>
                             </tr>
                         </thead>
-                        <tbody id="lista"><tr><td colspan="6" class="text-center text-muted py-3">Carregando…</td></tr></tbody>
+                        <tbody id="lista"><tr><td colspan="7" class="text-center text-muted py-3">Carregando…</td></tr></tbody>
                         <tfoot id="rodape"></tfoot>
                     </table>
                 </div>
 
-                <p class="small text-muted mt-2 mb-0">Legenda: PARC = parcela de veículo · OS = serviço de oficina · DÉB = multa/juros/outro débito · PGTO = pagamento · CRÉD = crédito/abatimento. O saldo considera os débitos vencidos até o mês atual; parcelas futuras aparecem em "A vencer".</p>
+                <p class="small text-muted mt-2 mb-0">Legenda: PARC = parcela de veículo · OS = serviço de oficina · DÉB = multa/juros/outro débito · PGTO = pagamento · CRÉD = crédito/abatimento. O saldo considera os débitos vencidos até o mês atual; parcelas futuras aparecem em "A vencer". Todo valor pago aparece na planilha, no mês da data do pagamento.</p>
 
             </div>
 
@@ -455,7 +456,7 @@
 
 <script src="auth.js?v=3"></script>
 
-<script src="controle-ernani.js?v=1"></script>
+<script src="controle-ernani.js?v=2"></script>
 
 </body>
 
