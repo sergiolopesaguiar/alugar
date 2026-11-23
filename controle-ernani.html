@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Sistema - Controle Ernani Veículos</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css?v=2">
+
+    <style>
+        /* Controle Ernani Veículos - aparência de planilha (escopo .ce) */
+        .ce .card-body{font-family:Calibri, Carlito, "Segoe UI", Arial, sans-serif;}
+        .ce-cab{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));border:1px solid #d9d9d9;background:#fff;font-size:14px;}
+        .ce-borda-b{border-bottom:1px solid #e3e3e3;}
+        .ce-forn{width:auto;max-width:100%;color:#0b57d0;font-weight:700;text-decoration:underline;border-color:transparent;}
+        .ce-tot-grid{display:grid;grid-template-columns:130px 1fr;}
+        .ce-cab-dir{display:grid;grid-template-columns:160px 1fr;border-left:1px solid #e3e3e3;align-content:start;}
+        .ce-ouro{background:#c99a2e;color:#1a1a1a;font-weight:700;padding:5px 10px;border-bottom:1px solid #fff;}
+        .ce-cinza{background:#ececec;padding:5px 10px;border-bottom:1px solid #fff;font-variant-numeric:tabular-nums;}
+        .ce-saldo{font-size:22px;font-weight:700;color:#8a1c1c;text-align:right;}
+        .ce-claro{background:#f6f6f6;padding:5px 10px;}
+        .ce-azul{background:#eef2f6;padding:5px 10px;}
+        .ce-rapido{background:#fffbe8;border:1px solid #e6d48a;border-radius:4px;padding:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;}
+        .ce-rapido label{font-size:11px;color:#5c4b00;display:block;margin-bottom:1px;}
+        .ce-rapido.editando{background:#fff1c2;border-color:#d4a72c;}
+        .ce-tabela-box{border:1px solid #bfbfbf;max-height:75vh;}
+        .ce-tabela{font-size:13px;min-width:820px;}
+        .ce-tabela td,.ce-tabela th{padding:2px 8px;border-right:1px solid #d9d9d9;vertical-align:middle;white-space:nowrap;}
+        .ce-tabela thead th{background:#1f1f1f;color:#fff;position:sticky;top:0;z-index:2;border-color:#444;}
+        .ce-tabela tfoot td{background:#1f1f1f;color:#fff;font-weight:700;border-color:#444;}
+        .ce-tabela .ce-mes td{background:#dde3ea;border-top:2px solid #8a96a3;font-weight:700;color:#1d2a38;}
+        .ce-tabela .ce-num{text-align:right;font-variant-numeric:tabular-nums;}
+        .ce-tabela .ce-pago{color:#14532d;}
+        .ce-tabela tr.ce-editando td{background:#fff4c2;}
+        .ce-tabela .ce-desc{max-width:340px;overflow:hidden;text-overflow:ellipsis;}
+        .ce-tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px;min-width:34px;text-align:center;margin-right:6px;}
+        .ce-tag-parcela{background:#dbe7f6;color:#123a6b;}
+        .ce-tag-os{background:#e4e4e4;color:#262626;}
+        .ce-tag-debito{background:#fbe0d6;color:#7a2410;}
+        .ce-tag-pagamento{background:#d8f0de;color:#14532d;}
+        .ce-tag-credito{background:#d6efef;color:#0d4848;}
+        .ce-vinc{font-size:11px;color:#5a6672;margin-left:6px;}
+        .ce-acao{background:none;border:0;padding:0 4px;color:#555;line-height:1;}
+        #modalCarro .ce-tabela, #modalAdicionar .ce-tabela{min-width:0;}
+        .modal .form-label{font-size:.72rem;}
+        .modal .ce-tabela{min-width:720px;}
+        #modalCarro .ce-tabela{min-width:0;}
+        .ce-acao:hover{color:#000;}
+        @media print{
+            .ce-tabela-box{max-height:none;border:0;}
+            .ce-tabela{min-width:0;}
+        }
+    </style>
+
+
+</head>
+
+<body>
+
+<div id="loginBox" class="login-wrapper d-flex justify-content-center align-items-center">
+
+    <div class="login-card shadow-lg">
+
+        <div class="login-icon">
+            <i class="bi bi-car-front-fill"></i>
+        </div>
+
+        <h3 class="login-title">Sistema Alugar</h3>
+        <p class="login-subtitle">Entre com seus dados para continuar</p>
+
+        <div class="mb-3">
+            <label class="form-label small text-muted mb-1">Usuário</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input id="loginUsuario" type="text" class="form-control" placeholder="Seu usuário">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label small text-muted mb-1">Senha</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input id="loginSenha" type="password" class="form-control" placeholder="Sua senha" onkeydown="if(event.key==='Enter'){login()}">
+            </div>
+        </div>
+
+        <button class="btn btn-primary w-100 login-btn" onclick="login()">
+            Entrar
+        </button>
+
+    </div>
+
+</div>
+
+<div id="dashboard" class="d-none">
+
+    <div class="d-flex flex-column flex-md-row">
+
+    <nav class="navbar navbar-dark bg-dark d-md-none">
+        <div class="container-fluid">
+            <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+                &#9776; Menu
+            </button>
+            <span class="navbar-brand mb-0 h6 text-white ms-2">Sistema</span>
+        </div>
+    </nav>
+
+    <div class="offcanvas-md offcanvas-start bg-dark text-white sidebar" tabindex="-1" id="sidebarMenu">
+
+        <div class="offcanvas-header d-md-none">
+            <h5 class="offcanvas-title text-white">Menu</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu"></button>
+        </div>
+
+        <div class="offcanvas-body d-md-flex flex-column p-0">
+
+            <div class="sidebar-titulo d-none d-md-flex justify-content-between align-items-center">
+                <span>Menu</span>
+                <button type="button" class="btn-colapsar-menu" onclick="alternarMenu()" title="Esconder menu">&#9664;</button>
+            </div>
+
+            <a href="index.html" class="sidebar-link" data-rotina="dashboard">Dashboard</a>
+
+            <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuCadastros" role="button" aria-expanded="true" aria-controls="menuCadastros">
+                <span>Cadastros</span>
+                <span class="menu-caret">&#9662;</span>
+            </a>
+            <div class="collapse show" id="menuCadastros">
+                <a href="atividades.html" class="sidebar-link sidebar-sublink" data-rotina="atividades">Atividades</a>
+                <a href="clientes.html" class="sidebar-link sidebar-sublink" data-rotina="clientes">Clientes</a>
+                <a href="condutor.html" class="sidebar-link sidebar-sublink" data-rotina="condutor">Condutor</a>
+                <a href="contratos.html" class="sidebar-link sidebar-sublink" data-rotina="contratos">Contratos</a>
+                <a href="fornecedor.html" class="sidebar-link sidebar-sublink" data-rotina="fornecedor">Fornecedor</a>
+                <a href="veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="veiculos">Veículos</a>
+                <a href="historico-manutencoes.html" class="sidebar-link sidebar-sublink" data-rotina="historico_manutencoes">Histórico dos Veículos</a>
+                <a href="multas.html" class="sidebar-link sidebar-sublink" data-rotina="multas">Multas</a>
+            </div>
+
+            <a href="manutencao.html" class="sidebar-link" data-rotina="manutencao">Manutenção</a>
+
+            <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuRelatorios" role="button" aria-expanded="true" aria-controls="menuRelatorios">
+                <span>Relatórios</span>
+                <span class="menu-caret">&#9662;</span>
+            </a>
+            <div class="collapse show" id="menuRelatorios">
+                <a href="relatorio-inventario-veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_inventario_veiculos">Inventário de Veículos</a>
+                <a href="relatorio-veiculos.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_veiculos">Veículos</a>
+                <a href="relatorio-faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="relatorio_faturamento">Faturamento</a>
+            </div>
+
+            <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuFinanceiro" role="button" aria-expanded="true" aria-controls="menuFinanceiro">
+                <span>Financeiro</span>
+                <span class="menu-caret">&#9662;</span>
+            </a>
+            <div class="collapse show" id="menuFinanceiro">
+                <a href="faturamento.html" class="sidebar-link sidebar-sublink" data-rotina="faturamento">Faturamento</a>
+                <a href="conta-contabil.html" class="sidebar-link sidebar-sublink" data-rotina="conta_contabil">Conta Contábil</a>
+                <a href="contas-pagar.html" class="sidebar-link sidebar-sublink" data-rotina="contas_pagar">Contas a Pagar</a>
+                <a href="controle-ernani.html" class="sidebar-link sidebar-sublink active" data-rotina="controle_ernani">Controle Ernani Veículos</a>
+            </div>
+
+            <a class="sidebar-link sidebar-group-toggle d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#menuAdministracao" role="button" aria-expanded="true" aria-controls="menuAdministracao">
+                <span>Administração</span>
+                <span class="menu-caret">&#9662;</span>
+            </a>
+            <div class="collapse show" id="menuAdministracao">
+                <a href="usuarios.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Usuários</a>
+                <a href="permissoes.html" class="sidebar-link sidebar-sublink" data-admin-only="sim">Permissões</a>
+            </div>
+
+        </div>
+
+    </div>
+
+    <button type="button" id="btnExpandirMenu" class="btn btn-dark btn-sm sidebar-expand-btn" onclick="alternarMenu()" title="Mostrar menu">&#9654;</button>
+
+    <div class="flex-grow-1 p-3 p-md-4" style="min-width:0">
+
+        <div class="card shadow ce">
+
+            <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+
+                <h3 class="mb-0 h4">Controle Ernani Veículos</h3>
+
+                <div class="d-flex gap-2 flex-wrap no-print">
+                    <button class="btn btn-light btn-sm" onclick="exportarExcel()" title="Exportar para Excel (filtros aplicados)"><i class="bi bi-file-earmark-excel text-success"></i> Excel</button>
+                    <button class="btn btn-light btn-sm" onclick="exportarPdf()" title="Exportar para PDF (filtros aplicados)"><i class="bi bi-file-earmark-pdf text-danger"></i> PDF</button>
+                    <button class="btn btn-outline-light btn-sm" onclick="logout()">Sair</button>
+                </div>
+
+            </div>
+
+            <div class="card-body">
+
+                <!-- Cabeçalho no estilo da planilha -->
+                <div class="ce-cab mb-3">
+                    <div class="ce-cab-esq">
+                        <div class="d-flex align-items-center gap-2 px-2 py-1 ce-borda-b flex-wrap">
+                            <label for="fornecedorSel" class="small text-muted mb-0">Terceiro</label>
+                            <select id="fornecedorSel" class="form-select form-select-sm ce-forn" onchange="trocarFornecedor()"></select>
+                        </div>
+                        <div class="ce-tot-grid">
+                            <div class="ce-ouro">TOTAL DÉBITOS</div><div class="ce-cinza" id="totDebitos">R$ 0,00</div>
+                            <div class="ce-ouro">TOTAL PAGO</div><div class="ce-cinza" id="totPago">R$ 0,00</div>
+                        </div>
+                    </div>
+                    <div class="ce-cab-dir">
+                        <div class="ce-ouro d-flex align-items-center">SALDO A PAGAR</div>
+                        <div class="ce-cinza ce-saldo" id="totSaldo">R$ 0,00</div>
+                        <div class="ce-claro fw-bold text-center">DATA ATUAL:</div>
+                        <div class="ce-claro text-center" id="dataAtual"></div>
+                        <div class="ce-azul fw-bold text-center small">A VENCER (futuro):</div>
+                        <div class="ce-azul text-center small d-flex gap-2 justify-content-center align-items-center flex-wrap">
+                            <span id="totFuturo">R$ 0,00</span>
+                            <label class="small d-inline-flex gap-1 align-items-center mb-0"><input type="checkbox" id="mostrarFuturo" onchange="render()"> mostrar na planilha</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros e botões -->
+                <div class="d-flex gap-2 flex-wrap align-items-center mb-2 no-print">
+                    <input id="busca" class="form-control form-control-sm" style="flex:1 1 220px;max-width:340px" placeholder="Pesquisar descrição ou nº da OS…" oninput="render()">
+                    <select id="filtroMes" class="form-select form-select-sm" style="width:auto" onchange="render()" title="Mês"></select>
+                    <select id="filtroAno" class="form-select form-select-sm" style="width:auto" onchange="render()" title="Ano"></select>
+                    <select id="filtroVeiculo" class="form-select form-select-sm" style="width:auto" onchange="render()" title="Veículo"></select>
+                    <div class="ms-auto d-flex gap-2 flex-wrap">
+                        <button class="btn btn-sm btn-outline-dark fw-bold" onclick="abrirPendentes()"><i class="bi bi-tools"></i> SERVIÇOS PENDENTES <span class="badge bg-danger" id="qtdPendentes">0</span></button>
+                        <button class="btn btn-sm btn-dark fw-bold" onclick="abrirAdicionarServico()">+ ADICIONAR SERVIÇO</button>
+                        <button class="btn btn-sm btn-primary fw-bold" onclick="abrirCarro()"><i class="bi bi-car-front"></i> + CARRO / PARCELAS</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="abrirHistorico()" title="Histórico de alterações deste terceiro"><i class="bi bi-clock-history"></i> Histórico</button>
+                    </div>
+                </div>
+
+                <!-- Lançamento rápido -->
+                <div class="ce-rapido mb-2 no-print" id="barraRapida">
+                    <div>
+                        <label for="qTipo">Tipo</label>
+                        <select id="qTipo" class="form-select form-select-sm" onchange="ajustarBarra()">
+                            <option value="pagamento">Pagamento</option>
+                            <option value="parcela">Parcela de veículo</option>
+                            <option value="os">Serviço de oficina (OS)</option>
+                            <option value="debito">Multa / juros / outro débito</option>
+                            <option value="credito">Crédito / abatimento</option>
+                        </select>
+                    </div>
+                    <div style="flex:2 1 170px">
+                        <label for="qDesc">Descrição</label>
+                        <input id="qDesc" class="form-control form-control-sm">
+                    </div>
+                    <div>
+                        <label for="qData">Data</label>
+                        <input id="qData" type="date" class="form-control form-control-sm">
+                    </div>
+                    <div style="flex:0 1 115px" id="boxValor">
+                        <label for="qValor">Valor</label>
+                        <input id="qValor" class="form-control form-control-sm text-end" inputmode="decimal" placeholder="0,00">
+                    </div>
+                    <div style="flex:0 1 115px" id="boxPago">
+                        <label for="qPago">Valor pago</label>
+                        <input id="qPago" class="form-control form-control-sm text-end" inputmode="decimal" placeholder="0,00">
+                    </div>
+                    <div style="flex:1 1 110px">
+                        <label for="qForma">Forma de pag.</label>
+                        <input id="qForma" class="form-control form-control-sm" list="listaFormas" placeholder="pix, boleto…">
+                        <datalist id="listaFormas"><option value="pix"></option><option value="boleto"></option><option value="dinheiro"></option><option value="crédito"></option><option value="abatimento"></option></datalist>
+                    </div>
+                    <div style="flex:1 1 140px">
+                        <label for="qVinc">Vincular a (opcional)</label>
+                        <select id="qVinc" class="form-select form-select-sm"></select>
+                    </div>
+                    <div style="flex:0 1 110px" id="boxMes">
+                        <label for="qMes">Mês da planilha</label>
+                        <select id="qMes" class="form-select form-select-sm" title="Mês em que a linha aparece (usado quando não há data)"></select>
+                    </div>
+                    <button id="btnLancar" class="btn btn-sm btn-primary fw-bold" onclick="lancar()">Lançar</button>
+                    <button id="btnCancelarEdicao" class="btn btn-sm btn-secondary d-none" onclick="cancelarEdicao()">Cancelar</button>
+                </div>
+
+                <div id="aviso" class="alert alert-info py-1 px-2 small d-none mb-2"></div>
+
+                <!-- Planilha -->
+                <div class="table-responsive ce-tabela-box">
+                    <table class="table table-sm mb-0 ce-tabela">
+                        <thead>
+                            <tr>
+                                <th>DESCRIÇÃO</th>
+                                <th style="width:96px">DATA</th>
+                                <th class="text-end" style="width:110px">VALOR</th>
+                                <th class="text-end" style="width:110px">VALOR PAGO</th>
+                                <th style="width:170px">FORMA DE PAG</th>
+                                <th class="text-center no-print" style="width:92px">AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista"><tr><td colspan="6" class="text-center text-muted py-3">Carregando…</td></tr></tbody>
+                        <tfoot id="rodape"></tfoot>
+                    </table>
+                </div>
+
+                <p class="small text-muted mt-2 mb-0">Legenda: PARC = parcela de veículo · OS = serviço de oficina · DÉB = multa/juros/outro débito · PGTO = pagamento · CRÉD = crédito/abatimento. O saldo considera os débitos vencidos até o mês atual; parcelas futuras aparecem em "A vencer".</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    </div>
+
+</div>
+
+<!-- Modal: Serviços pendentes -->
+<div class="modal fade" id="modalPendentes" tabindex="-1" aria-labelledby="tituloPendentes" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="tituloPendentes">SERVIÇOS PENDENTES</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ce-rapido mb-2">
+                    <div style="flex:0 1 90px"><label for="sNum">Nº da OS</label><input id="sNum" class="form-control form-control-sm"></div>
+                    <div><label for="sData">Data do serviço</label><input id="sData" type="date" class="form-control form-control-sm"></div>
+                    <div style="flex:1 1 170px"><label for="sVeiculo">Veículo / placa</label><select id="sVeiculo" class="form-select form-select-sm" onchange="preencherPlacaServico()"></select></div>
+                    <div style="flex:0 1 100px"><label for="sPlaca">Placa</label><input id="sPlaca" class="form-control form-control-sm"></div>
+                    <div style="flex:2 1 180px"><label for="sDesc">Descrição</label><input id="sDesc" class="form-control form-control-sm"></div>
+                    <div style="flex:0 1 110px"><label for="sTotal">Valor total</label><input id="sTotal" class="form-control form-control-sm text-end" inputmode="decimal" placeholder="0,00"></div>
+                    <div style="flex:0 1 110px"><label for="sPago">Valor já pago</label><input id="sPago" class="form-control form-control-sm text-end" inputmode="decimal" placeholder="0,00"></div>
+                    <button class="btn btn-sm btn-primary fw-bold" id="btnSalvarServico" onclick="salvarServico()">Cadastrar OS</button>
+                    <button class="btn btn-sm btn-secondary d-none" id="btnCancelarServico" onclick="limparServico()">Cancelar</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 ce-tabela">
+                        <thead><tr><th>Nº OS</th><th>DATA</th><th>VEÍCULO / PLACA</th><th>DESCRIÇÃO</th><th class="text-end">VALOR TOTAL</th><th class="text-end">JÁ PAGO</th><th class="text-end">SALDO</th><th>SITUAÇÃO</th><th class="text-center">AÇÕES</th></tr></thead>
+                        <tbody id="listaServicos"></tbody>
+                        <tfoot id="rodapeServicos"></tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <label class="small d-flex gap-2 align-items-center mb-0"><input type="checkbox" id="mostrarQuitadas" onchange="renderServicos()"> Mostrar serviços já quitados</label>
+                <span class="small text-muted">A OS sai desta lista quando o saldo chega a zero.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Adicionar serviço na planilha -->
+<div class="modal fade" id="modalAdicionar" tabindex="-1" aria-labelledby="tituloAdicionar" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header flex-wrap gap-2">
+                <h5 class="modal-title fw-bold" id="tituloAdicionar">+ ADICIONAR SERVIÇO NA PLANILHA</h5>
+                <div class="d-flex gap-2 align-items-center ms-auto">
+                    <label for="mesAlvo" class="small text-muted mb-0">Lançar no mês</label>
+                    <select id="mesAlvo" class="form-select form-select-sm fw-bold" style="width:auto" onchange="atualizarResumoAdicionar()"></select>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 ce-tabela">
+                        <thead><tr><th style="width:36px"></th><th>Nº OS</th><th>VEÍCULO / PLACA</th><th>DESCRIÇÃO</th><th class="text-end">SALDO</th><th class="text-end" style="width:130px">VALOR A LANÇAR</th></tr></thead>
+                        <tbody id="listaAdicionar"></tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mt-2 mb-0">Deixe o valor cheio para lançar o saldo todo, ou digite um valor menor para lançar só uma parte neste mês. O restante continua pendente.</p>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <strong id="resumoAdicionar">Nenhuma OS selecionada</strong>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary btn-sm fw-bold" id="btnLancarServicos" onclick="lancarServicos()">Lançar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Carro comprado / financiado -->
+<div class="modal fade" id="modalCarro" tabindex="-1" aria-labelledby="tituloCarro" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="tituloCarro">CARRO COMPRADO / FINANCIADO</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-8"><label class="form-label mb-0" for="cVeiculo">Veículo (do cadastro ou novo)</label><input id="cVeiculo" class="form-control form-control-sm" list="listaVeiculosCarro" placeholder="HB20, MOBI…" oninput="previaCarro()"><datalist id="listaVeiculosCarro"></datalist></div>
+                    <div class="col-4"><label class="form-label mb-0" for="cPlaca">Placa</label><input id="cPlaca" class="form-control form-control-sm" oninput="previaCarro()"></div>
+                    <div class="col-6 col-sm-3"><label class="form-label mb-0" for="cValor">Valor da parcela</label><input id="cValor" class="form-control form-control-sm text-end" inputmode="decimal" placeholder="0,00" oninput="previaCarro()"></div>
+                    <div class="col-6 col-sm-3"><label class="form-label mb-0" for="cQtd">Qtd. parcelas</label><input id="cQtd" class="form-control form-control-sm text-end" inputmode="numeric" oninput="previaCarro()"></div>
+                    <div class="col-6 col-sm-3"><label class="form-label mb-0" for="cIni">Começar na</label><input id="cIni" class="form-control form-control-sm text-end" inputmode="numeric" value="1" oninput="previaCarro()"></div>
+                    <div class="col-6 col-sm-3"><label class="form-label mb-0" for="cVenc">1º vencimento</label><input id="cVenc" type="date" class="form-control form-control-sm" oninput="previaCarro()"></div>
+                </div>
+                <div class="small fw-bold text-muted mt-3" id="tituloPrevia">Prévia — preencha os campos acima</div>
+                <table class="table table-sm mb-0 ce-tabela mt-1">
+                    <thead><tr><th>DESCRIÇÃO</th><th>DATA</th><th class="text-end">VALOR</th></tr></thead>
+                    <tbody id="previaParcelas"></tbody>
+                </table>
+                <p class="small text-muted mt-2 mb-0">Cada parcela entra no mês do seu vencimento. Depois de geradas, valor e vencimento de qualquer parcela podem ser alterados na planilha (lápis).</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary btn-sm fw-bold" id="btnGerarParcelas" onclick="gerarParcelas()">Gerar parcelas</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Histórico -->
+<div class="modal fade" id="modalHistorico" tabindex="-1" aria-labelledby="tituloHistorico" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="tituloHistorico">Histórico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" id="corpoHistorico"></div>
+        </div>
+    </div>
+</div>
+
+<div id="statusBar" class="status-bar d-none no-print">
+    Usuário logado: <strong id="statusBarUsuario"></strong>
+</div>
+
+<script>
+// Decide login/dashboard IMEDIATAMENTE, sem esperar os scripts externos
+// (Supabase/Bootstrap) carregarem da CDN - evita o "flash" do formulário
+// de login ao trocar de aba/página. Ver index.html para o comentário completo.
+(function(){
+    var logado = localStorage.getItem('logado') === 'sim';
+    document.getElementById('loginBox').classList.toggle('d-none', logado);
+    document.getElementById('dashboard').classList.toggle('d-none', !logado);
+
+    var colapsado = localStorage.getItem('menuColapsado') === 'sim';
+    var sidebar = document.getElementById('sidebarMenu');
+    var btnExpandir = document.getElementById('btnExpandirMenu');
+    if(sidebar){ sidebar.classList.toggle('colapsado', colapsado); }
+    if(btnExpandir){ btnExpandir.classList.toggle('mostrar', colapsado); }
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="auth.js?v=3"></script>
+
+<script src="controle-ernani.js?v=1"></script>
+
+</body>
+
+</html>
