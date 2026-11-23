@@ -73,6 +73,13 @@ function lerValor(texto){
     return isNaN(n) ? 0 : Math.round(n * 100) / 100;
 }
 
+// Coluna VENCIMENTO: linha só de pagamento/crédito não tem vencimento
+// (a data dela aparece em DATA PAGTO).
+function vencimentoBR(l){
+    if(!l.valor && l.valor_pago && l.data_pagamento){ return ''; }
+    return dataBR(l.data);
+}
+
 function dataBR(iso){
     if(!iso){ return ''; }
     const p = String(iso).slice(0, 10).split('-');
@@ -354,7 +361,7 @@ function render(){
         g.linhas.forEach(l => {
             html += `<tr${l.id === editandoId ? ' class="ce-editando"' : ''}>
                 <td class="ce-desc" title="${esc(l.descricao)}"><span class="ce-tag ce-tag-${l.tipo}">${TAGS[l.tipo] || ''}</span>${esc(l.descricao)}${l.vinculo ? `<span class="ce-vinc">→ ${esc(l.vinculo)}</span>` : ''}</td>
-                <td>${dataBR(l.data)}</td>
+                <td>${vencimentoBR(l)}</td>
                 <td class="ce-num">${l.valor ? brl(l.valor) : ''}</td>
                 <td class="ce-num ce-pago">${l.valor_pago ? brl(l.valor_pago) : ''}</td>
                 <td>${esc(l.forma_pagamento)}</td>
@@ -390,7 +397,7 @@ function ajustarBarra(){
     // Pagamento/crédito: a "Data" já é a data do pagamento. Linha com débito e
     // pagamento juntos (importada da planilha) ganha um campo próprio.
     document.getElementById('boxDataPag').classList.toggle('d-none', !ambos);
-    document.getElementById('lblData').textContent = (ehPago && !ambos) ? 'Data do pagamento' : 'Data';
+    document.getElementById('lblData').textContent = (ehPago && !ambos) ? 'Data do pagamento' : 'Vencimento';
     desc.placeholder = {
         pagamento: 'Pix (opcional)',
         parcela: 'YARIS 27/36',
@@ -905,7 +912,7 @@ function linhasExportacao(){
         let gv = 0, gp = 0;
         g.linhas.forEach(l => { gv += l.valor; gp += l.valor_pago; });
         out.push({mes: true, descricao: rotuloMes(g.mes), data: '', valor: gv, pago: gp, forma: '', dataPag: ''});
-        g.linhas.forEach(l => out.push({mes: false, descricao: l.descricao || '', data: dataBR(l.data), valor: l.valor, pago: l.valor_pago, forma: [l.forma_pagamento, l.vinculo ? '→ ' + l.vinculo : ''].filter(Boolean).join(' '), dataPag: dataBR(l.data_pagamento)}));
+        g.linhas.forEach(l => out.push({mes: false, descricao: l.descricao || '', data: vencimentoBR(l), valor: l.valor, pago: l.valor_pago, forma: [l.forma_pagamento, l.vinculo ? '→ ' + l.vinculo : ''].filter(Boolean).join(' '), dataPag: dataBR(l.data_pagamento)}));
     });
     return out;
 }
@@ -930,7 +937,7 @@ async function exportarExcel(){
         ['TOTAL DÉBITOS', document.getElementById('totDebitos').textContent, 'DATA ATUAL', dataBR(hojeISO())],
         ['TOTAL PAGO', document.getElementById('totPago').textContent],
         [],
-        ['DESCRIÇÃO', 'DATA', 'VALOR', 'VALOR PAGO', 'FORMA DE PAG', 'DATA PAGTO']
+        ['DESCRIÇÃO', 'VENCIMENTO', 'VALOR', 'VALOR PAGO', 'FORMA DE PAG', 'DATA PAGTO']
     ];
     linhasExportacao().forEach(r => aoa.push([r.descricao, r.data, r.valor || null, r.pago || null, r.forma, r.dataPag]));
     const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -969,7 +976,7 @@ tr.m td{background:#dde3ea;font-weight:700;border-top:2px solid #8a96a3}
 <div class="o">TOTAL PAGO</div><div class="c">${document.getElementById('totPago').textContent}</div>
 <div class="o">DATA ATUAL</div><div class="c">${dataBR(hojeISO())}</div>
 </div>
-<table><thead><tr><th>DESCRIÇÃO</th><th>DATA</th><th class="n">VALOR</th><th class="n">VALOR PAGO</th><th>FORMA DE PAG</th><th>DATA PAGTO</th></tr></thead><tbody>${linhas}</tbody></table>
+<table><thead><tr><th>DESCRIÇÃO</th><th>VENCIMENTO</th><th class="n">VALOR</th><th class="n">VALOR PAGO</th><th>FORMA DE PAG</th><th>DATA PAGTO</th></tr></thead><tbody>${linhas}</tbody></table>
 </body></html>`);
     w.document.close();
     setTimeout(() => { try{ w.print(); } catch(e){} }, 400);
