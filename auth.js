@@ -222,3 +222,28 @@ function bloquearAcessoAdmin(){
         corpo.innerHTML = '<div class="alert alert-danger mb-0">Esta área é restrita a administradores.</div>';
     }
 }
+
+// ---------------------------------------------------------------------
+// Link "Controle Ernani Veículos" (Financeiro) no menu de todas as páginas.
+// O menu lateral é repetido em cada .html; para não alterar todas as
+// páginas, o link é inserido aqui, logo depois de "Contas a Pagar".
+// Roda antes de aplicarPermissoes() (chamada em checarLogin), então a
+// permissão por usuário (rotina controle_ernani) também vale para ele.
+(function adicionarLinkControleErnani(){
+    function inserir(){
+        if(document.querySelector('a[href="controle-ernani.html"]')){ return; }
+        const ref = document.querySelector('a[href="contas-pagar.html"]');
+        if(!ref){ return; }
+        const a = document.createElement('a');
+        a.href = 'controle-ernani.html';
+        a.className = 'sidebar-link sidebar-sublink';
+        a.dataset.rotina = 'controle_ernani';
+        a.textContent = 'Controle Ernani Veículos';
+        ref.insertAdjacentElement('afterend', a);
+    }
+    if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', inserir);
+    } else {
+        inserir();
+    }
+})();
