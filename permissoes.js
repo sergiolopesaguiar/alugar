@@ -31,7 +31,8 @@ const ROTINAS = [
     {codigo: 'faturamento', label: 'Financeiro > Faturamento'},
     {codigo: 'fornecedor', label: 'Financeiro > Fornecedor'},
     {codigo: 'conta_contabil', label: 'Financeiro > Conta Contábil'},
-    {codigo: 'contas_pagar', label: 'Financeiro > Contas a Pagar'}
+    {codigo: 'contas_pagar', label: 'Financeiro > Contas a Pagar'},
+    {codigo: 'controle_ernani', label: 'Financeiro > Controle Ernani Veículos'}
 ];
 
 async function carregar(){
